@@ -4,10 +4,10 @@ import pageLoader from '../src/index.js';
 
 program
   .version('0.0.1')
-  .description('Compares two configuration files and shows a difference.')
+  .description('Page loader utility.')
   .option('-o, --output [dir]', 'output dir', '/home/user/current-dir')
   .arguments('<url>')
   .action((pagepath, options) => {
-    console.log(pageLoader(pagepath, options.output));
+    pageLoader(pagepath, options.output).then((response) => console.log(response));
   })
   .parse(process.argv);

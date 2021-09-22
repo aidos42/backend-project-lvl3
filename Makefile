@@ -3,7 +3,7 @@ install:
 	npm ci
 
 run:
-	bin/page-loader.js -h
+	node bin/page-loader.js -h
 
 publish:
 	npm publish --dry-run
