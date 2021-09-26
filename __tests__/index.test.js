@@ -20,24 +20,24 @@ beforeEach(async () => {
 });
 
 test('expect to return the path to the downloaded file', async () => {
-  const file = 'ru-hexlet-io-courses.html';
+  const file = 'aidos42-github-io-sample-page-index.html';
   const filepath = path.join(tempDirpath, file);
 
   const expectedAnswer = filepath;
-  const recieved = await pageLoader('https://ru.hexlet.io/courses', tempDirpath);
+  const recieved = await pageLoader('https://aidos42.github.io/sample-page/index', tempDirpath);
 
   expect(recieved).toBe(expectedAnswer);
 });
 
 test('expect that the beginning of the file is as expected', async () => {
-  const file = 'ru-hexlet-io-courses.html';
+  const file = 'aidos42-github-io-sample-page-index.html';
   const filepath = path.join(tempDirpath, file);
 
-  const expectedAnswer = await readFixture('ru-hexlet-io-courses.html');
+  const expectedAnswer = await readFixture('aidos42-github-io-sample-page-index.html');
 
-  await pageLoader('https://ru.hexlet.io/courses', tempDirpath);
+  await pageLoader('https://aidos42.github.io/sample-page/index', tempDirpath);
 
   const recieved = await fs.readFile(filepath, 'utf-8');
 
-  expect(recieved.slice(0, 126)).toBe(expectedAnswer.slice(0, 126));
+  expect(recieved).toBe(expectedAnswer);
 });
