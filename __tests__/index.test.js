@@ -41,3 +41,28 @@ test('expect that the beginning of the file is as expected', async () => {
 
   expect(recieved).toBe(expectedAnswer);
 });
+
+test('expect to find images in tmp folder', async () => {
+  const dir = 'aidos42-github-io-sample-page-index_files';
+  const currentDirpath = path.join(tempDirpath, dir);
+
+  await pageLoader('https://aidos42.github.io/sample-page/index', tempDirpath);
+
+  const recieved = await fs.readdir(currentDirpath);
+
+  const expectedAnswer = ['aidos42-github-io-sample-page-index-sample1.jpg',
+    'aidos42-github-io-sample-page-index-sample2.jpg',
+    'aidos42-github-io-sample-page-index-Sample3.jpg',
+    'aidos42-github-io-sample-page-index-sample4.jpg',
+    'aidos42-github-io-sample-page-index-samPLe5.jpg',
+    'aidos42-github-io-sample-page-index-sample6.jpg',
+    'aidos42-github-io-sample-page-index-samplE7.jpg',
+    'aidos42-github-io-sample-page-index-Sample8.jpg',
+    'aidos42-github-io-sample-page-index-SAMPLE9.jpg',
+    'aidos42-github-io-sample-page-index-sample10.jpg',
+    'aidos42-github-io-sample-page-index-sample11.jpg',
+    'aidos42-github-io-sample-page-index-sample12.jpg',
+    'aidos42-github-io-sample-page-index-sample13.jpg'];
+
+  expect(recieved).toEqual(expectedAnswer);
+});
