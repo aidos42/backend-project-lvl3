@@ -29,7 +29,7 @@ test('expect to return the path to the downloaded file', async () => {
   expect(recieved).toBe(expectedAnswer);
 });
 
-test('expect that the beginning of the file is as expected', async () => {
+test('expect that the file is equal to expected', async () => {
   const file = 'aidos42-github-io-sample-page-index.html';
   const filepath = path.join(tempDirpath, file);
 
@@ -48,21 +48,21 @@ test('expect to find images in tmp folder', async () => {
 
   await pageLoader('https://aidos42.github.io/sample-page/index', tempDirpath);
 
-  const recieved = await fs.readdir(currentDirpath);
+  const recieved = await (await fs.readdir(currentDirpath)).sort();
 
-  const expectedAnswer = ['aidos42-github-io-sample-page-index-sample1.jpg',
-    'aidos42-github-io-sample-page-index-sample2.jpg',
-    'aidos42-github-io-sample-page-index-Sample3.jpg',
-    'aidos42-github-io-sample-page-index-sample4.jpg',
-    'aidos42-github-io-sample-page-index-samPLe5.jpg',
-    'aidos42-github-io-sample-page-index-sample6.jpg',
-    'aidos42-github-io-sample-page-index-samplE7.jpg',
-    'aidos42-github-io-sample-page-index-Sample8.jpg',
-    'aidos42-github-io-sample-page-index-SAMPLE9.jpg',
-    'aidos42-github-io-sample-page-index-sample10.jpg',
-    'aidos42-github-io-sample-page-index-sample11.jpg',
-    'aidos42-github-io-sample-page-index-sample12.jpg',
-    'aidos42-github-io-sample-page-index-sample13.jpg'];
+  const expectedAnswer = ['aidos42-github-io-sample-page-img-sample1.jpg',
+    'aidos42-github-io-sample-page-img-sample2.jpg',
+    'aidos42-github-io-sample-page-img-Sample3.jpg',
+    'aidos42-github-io-sample-page-img-sample4.jpg',
+    'aidos42-github-io-sample-page-img-samPLe5.jpg',
+    'aidos42-github-io-sample-page-img-sample6.jpg',
+    'aidos42-github-io-sample-page-img-samplE7.jpg',
+    'aidos42-github-io-sample-page-img-Sample8.jpg',
+    'aidos42-github-io-sample-page-img-SAMPLE9.jpg',
+    'aidos42-github-io-sample-page-img-sample10.jpg',
+    'aidos42-github-io-sample-page-img-sample11.jpg',
+    'aidos42-github-io-sample-page-img-sample12.jpg',
+    'aidos42-github-io-sample-page-img-sample13.jpg'].sort();
 
   expect(recieved).toEqual(expectedAnswer);
 });
