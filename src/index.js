@@ -1,10 +1,11 @@
 import path from 'path';
 import fs from 'fs/promises';
 import axios from 'axios';
+import 'axios-debug-log';
 import prettier from 'prettier';
 import { buildName, getAssets, replaceAssets } from './utils.js';
 
-export default (url, outputDirpath) => {
+export default (url, outputDirpath = process.cwd()) => {
   const pageName = buildName.file(url);
   const dirName = buildName.dir(url);
   const pagepath = `${path.resolve(path.join(outputDirpath, pageName))}.html`;
