@@ -42,7 +42,7 @@ test('expect that the file is equal to expected', async () => {
   expect(recieved).toBe(expectedAnswer);
 });
 
-test('expect to find images in tmp folder', async () => {
+test('expect to find assets in files directory', async () => {
   const dir = 'aidos42-github-io-sample-page-index_files';
   const currentDirpath = path.join(tempDirpath, dir);
 
@@ -62,7 +62,9 @@ test('expect to find images in tmp folder', async () => {
     'aidos42-github-io-sample-page-img-sample10.jpg',
     'aidos42-github-io-sample-page-img-sample11.jpg',
     'aidos42-github-io-sample-page-img-sample12.jpg',
-    'aidos42-github-io-sample-page-img-sample13.jpg'].sort();
+    'aidos42-github-io-sample-page-img-sample13.jpg',
+    'aidos42-github-io-sample-page-style.css',
+    'aidos42-github-io-sample-page-js-utils.js'].sort();
 
   expect(recieved).toEqual(expectedAnswer);
 });

@@ -1,5 +1,6 @@
 import path from 'path';
 import * as cheerio from 'cheerio';
+import _ from 'lodash';
 
 const buildFileName = (url) => {
   const { hostname, pathname } = new URL(url);
@@ -25,34 +26,47 @@ const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
 
 const buildFullSrc = (src, hostname) => {
   if (!hasScheme(src)) {
-    return new URL(src, hostname);
+    const fullHostname = hasScheme(hostname) ? hostname : `https:${hostname}`;
+    return new URL(src, fullHostname);
   }
 
-  return new URL(`https:${src}`);
+  return new URL(src);
 };
 
-const getImgs = (html, { url, dirName }) => {
+const getAssets = (html, { url, dirName }) => {
   const { hostname, pathname } = new URL(url);
   const $ = cheerio.load(html);
-  const imgData = $('img').toArray().map((img) => {
-    const { src: oldSrc } = img.attribs;
-    const fullpath = path.join(hostname, pathname);
-    const { href } = buildFullSrc(oldSrc, `https:${fullpath}`);
-    const newSrc = path.join(dirName, buildName.file(href));
+  const elements = ['img', 'link', 'script'];
+  const attributes = ['src', 'href'];
+  const assets = elements.map((element) => {
+    const assetData = $(element).toArray().map((item) => {
+      const attribute = attributes.find((value) => _.has(item.attribs, value));
+      const oldSrc = item.attribs[attribute];
+      const origin = path.join(hostname, pathname);
+      const { href } = buildFullSrc(oldSrc, origin);
+      const newSrc = path.join(dirName, buildName.file(href));
 
-    return { oldSrc, newSrc, href };
+      return {
+        oldSrc, newSrc, href, element, attribute,
+      };
+    });
+
+    return assetData;
   });
 
-  return imgData;
+  return assets.flat();
 };
 
-const replaceImgs = (html, imgs) => {
+const replaceAssets = (html, assets) => {
   const $ = cheerio.load(html);
-  imgs.forEach(({ oldSrc, newSrc }) => {
-    $(`img[src="${oldSrc}"]`).attr('src', newSrc);
+  assets.forEach(({
+    oldSrc, newSrc, element, attribute,
+  }) => {
+    const selector = `${element}[${attribute}=${oldSrc}]`;
+    $(selector).attr(attribute, newSrc);
   });
 
   return $.root().html();
 };
 
-export { buildName, getImgs, replaceImgs };
+export { buildName, getAssets, replaceAssets };
