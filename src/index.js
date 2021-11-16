@@ -5,6 +5,7 @@ import axios from 'axios';
 import 'axios-debug-log';
 import prettier from 'prettier';
 import { buildName, getAssets, replaceAssets } from './utils.js';
+import ReadableError from './ReadableError.js';
 
 const log = debug('page-loader');
 
@@ -64,5 +65,8 @@ export default (url, outputDirpath = process.cwd()) => {
 
       log('job finished ok');
     })
-    .then(() => config.pagepath);
+    .then(() => config.pagepath)
+    .catch((error) => {
+      throw new ReadableError(error);
+    });
 };
