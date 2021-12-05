@@ -98,16 +98,18 @@ describe('filesysten errors', () => {
 
   test('wrong folder', async () => {
     const wrongTempDirPath = path.join(tempDirpath, '/wrong-folder');
-    const result = await pageLoader(fixtures.page.url, wrongTempDirPath);
 
-    await expect(result).rejects.toThrow();
+    expect(async () => {
+      await pageLoader(fixtures.page.url, wrongTempDirPath);
+    }).toThrow();
   });
 
   test('no access to folder', async () => {
     await fs.chmod(tempDirpath, 0);
-    const result = await pageLoader(fixtures.page.url, tempDirpath);
 
-    await expect(result).rejects.toThrowError();
+    expect(async () => {
+      await pageLoader(fixtures.page.url, tempDirpath);
+    }).toThrow();
   });
 });
 
@@ -121,9 +123,9 @@ describe('network errors', () => {
       .get(fixtures.page.path)
       .reply(404);
 
-    const result = await pageLoader(fixtures.page.url, tempDirpath);
-
-    await expect(result).rejects.toThrowError();
+    expect(async () => {
+      await pageLoader(fixtures.page.url, tempDirpath);
+    }).toThrow();
   });
 
   test('500', async () => {
@@ -131,8 +133,8 @@ describe('network errors', () => {
       .get(fixtures.page.path)
       .reply(500);
 
-    const result = await pageLoader(fixtures.page.url, tempDirpath);
-
-    await expect(result).rejects.toThrowError();
+    expect(async () => {
+      await pageLoader(fixtures.page.url, tempDirpath);
+    }).toThrow();
   });
 });
