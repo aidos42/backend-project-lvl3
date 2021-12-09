@@ -4,6 +4,7 @@ import debug from 'debug';
 import axios from 'axios';
 import 'axios-debug-log';
 import prettier from 'prettier';
+import Listr from 'listr';
 import { buildName, getAssets, replaceAssets } from './utils.js';
 import ReadableError from './ReadableError.js';
 
@@ -55,15 +56,18 @@ export default (url, outputDirpath = process.cwd()) => {
     .then(([, , ...responses]) => {
       log('assets downloaded ok');
 
-      responses.forEach((response) => {
+      const tasks = responses.map((response) => {
         const asset = response.data;
         const href = response.config.url;
         const assetpath = path.resolve(config.dirpath, buildName.file(href));
-        fs.writeFile(assetpath, asset);
-        log(`asset ${href} downloaded succesful in ${assetpath}`);
+
+        return {
+          title: `write asset ${href}`,
+          task: () => fs.writeFile(assetpath, asset),
+        };
       });
 
-      log('job finished ok');
+      return new Listr(tasks, { concurrent: true, exitOnError: false }).run();
     })
     .then(() => config.pagepath)
     .catch((error) => {
