@@ -4,9 +4,10 @@ import _ from 'lodash';
 
 const buildFileName = (url) => {
   const { hostname, pathname } = new URL(url);
-  const extension = path.extname(pathname);
+  const extension = path.extname(pathname) ? path.extname(pathname) : '.html';
   const crude = path.join(hostname, pathname.replace(extension, ''));
   const name = crude.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+
   return `${name}${extension}`;
 };
 
@@ -14,6 +15,7 @@ const buildDirName = (url) => {
   const { hostname, pathname } = new URL(url);
   const crude = path.join(hostname, pathname);
   const name = crude.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+
   return `${name}_files`;
 };
 
@@ -27,6 +29,7 @@ const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
 const buildFullSrc = (src, hostname) => {
   if (!hasScheme(src)) {
     const fullHostname = hasScheme(hostname) ? hostname : `https:${hostname}`;
+
     return new URL(src, fullHostname);
   }
 
@@ -34,8 +37,6 @@ const buildFullSrc = (src, hostname) => {
 };
 
 const isSameOrigin = (url1, url2) => {
-  console.log(`url1: ${url1}`);
-  console.log(`url2: ${url2}`);
   const { hostname: hostname1 } = new URL(url1);
   const { hostname: hostname2 } = new URL(url2);
 
@@ -54,7 +55,7 @@ const getAssets = (html, { url, dirName }) => {
       const origin = path.join(hostname, pathname);
       const { href } = buildFullSrc(oldSrc, origin);
 
-      if (!isSameOrigin(origin, href)) {
+      if (!isSameOrigin(url, href)) {
         return {};
       }
 

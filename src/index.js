@@ -28,8 +28,8 @@ export default (url, outputDirpath = process.cwd()) => {
   return axios.get(config.url)
     .then((response) => {
       log('downloading page and assets');
-      const assets = getAssets(response.data, config);
-
+      const rawAssets = getAssets(response.data, config);
+      const assets = rawAssets.filter((asset) => Object.keys(asset).length !== 0);
       log('replacing assets in page');
       const html = replaceAssets(response.data, assets);
 
