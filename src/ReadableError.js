@@ -1,9 +1,12 @@
 const generateErrorMessage = (error) => {
-  const { code, message, path } = error;
+  const {
+    code, name, message, path,
+  } = error;
 
   return [
     'There was an error during execution',
     `Code: ${code}`,
+    `Name: ${name}`,
     `Message: ${message}`,
     `Path: ${path}`,
   ].join('\n');
