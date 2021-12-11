@@ -33,6 +33,15 @@ const buildFullSrc = (src, hostname) => {
   return new URL(src);
 };
 
+const isSameOrigin = (url1, url2) => {
+  console.log(`url1: ${url1}`);
+  console.log(`url2: ${url2}`);
+  const { hostname: hostname1 } = new URL(url1);
+  const { hostname: hostname2 } = new URL(url2);
+
+  return hostname1 === hostname2;
+};
+
 const getAssets = (html, { url, dirName }) => {
   const { hostname, pathname } = new URL(url);
   const $ = cheerio.load(html);
@@ -44,6 +53,11 @@ const getAssets = (html, { url, dirName }) => {
       const oldSrc = item.attribs[attribute];
       const origin = path.join(hostname, pathname);
       const { href } = buildFullSrc(oldSrc, origin);
+
+      if (!isSameOrigin(origin, href)) {
+        return {};
+      }
+
       const newSrc = path.join(dirName, buildName.file(href));
 
       return {
