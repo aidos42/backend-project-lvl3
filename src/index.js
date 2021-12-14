@@ -61,7 +61,7 @@ export default (url, outputDirpath = process.cwd()) => {
         const href = response.config.url;
         const assetpath = path.resolve(config.dirpath, buildName.file(href));
 
-        console.log(`href: ${href} assetpath: ${assetpath}`);
+        console.log(`asset: ${asset} href: ${href} assetpath: ${assetpath}`);
 
         return {
           title: `write asset ${href}`,

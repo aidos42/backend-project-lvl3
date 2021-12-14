@@ -10,33 +10,33 @@ nock.disableNetConnect();
 const getFixturePath = (filename) => path.join(process.cwd(), '__fixtures__', filename);
 
 const fixtures = {
-  base: 'https://ru.hexlet.io/',
-  dir: 'ru-hexlet-io-courses_files',
+  base: 'https://site.com/',
+  dir: 'site-com-blog-about_files',
   page: {
-    url: 'https://ru.hexlet.io/courses',
-    path: '/courses',
-    before: 'before.html',
-    after: 'after.html',
+    url: 'https://site.com/blog/about/',
+    path: '/blog/about',
+    before: 'site-com-blog-about.html',
+    after: '/expected/site-com-blog-about.html',
   },
   img: {
-    path: '/assets/professions/nodejs.png',
-    name: 'ru-hexlet-io-assets-professions-nodejs.png',
-    expected: 'nodejs.png',
+    path: '/photos/me.jpg',
+    name: 'site-com-photos-me.jpg',
+    expected: '/expected/site-com-blog-about_files/site-com-photos-me.jpg',
   },
   css: {
-    path: '/assets/application.css',
-    name: 'ru-hexlet-io-assets-application.css',
-    expected: 'application.css',
+    path: '/blog/about/assets/styles.css',
+    name: 'site-com-blog-about-assets-styles.css',
+    expected: '/expected/site-com-blog-about_files/site-com-blog-about-assets-styles.css',
   },
   link: {
-    path: '/courses',
-    name: 'ru-hexlet-io-courses.html',
-    expected: 'ru-hexlet-io-courses.html',
+    path: '/blog/about',
+    name: 'site-com-blog-about.html',
+    expected: '/expected/site-com-blog-about_files/site-com-blog-about.html',
   },
   script: {
-    path: '/packs/js/runtime.js',
-    name: 'ru-hexlet-io-packs-js-runtime.js',
-    expected: 'runtime.js',
+    path: '/assets/scripts.js',
+    name: 'site-com-assets-scripts.js',
+    expected: '/expected/site-com-blog-about_files/site-com-assets-scripts.js',
   },
 };
 
@@ -61,6 +61,7 @@ beforeEach(async () => {
 
 describe('positive case', () => {
   test('should work correct', async () => {
+    console.log(fixtures.script.path);
     nock(fixtures.base)
       .get(fixtures.page.path)
       .reply(200, page)
