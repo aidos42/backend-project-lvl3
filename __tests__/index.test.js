@@ -198,7 +198,7 @@ describe('site.com fixtures cases', () => {
   });
 });
 
-describe('localhost fixtures cases', () => {
+describe.skip('localhost fixtures cases', () => {
   let tempDirpath;
   let page;
   let expectedPage;

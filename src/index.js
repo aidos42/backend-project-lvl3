@@ -57,7 +57,8 @@ export default (url, outputDirpath = process.cwd()) => {
       log('assets downloaded ok');
 
       const tasks = responses.map((response) => {
-        const asset = response.data;
+        const { data } = response;
+        const asset = data.toString();
         const href = response.config.url;
         const assetpath = path.resolve(config.dirpath, buildName.file(href));
 
