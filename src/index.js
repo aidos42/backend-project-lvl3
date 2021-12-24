@@ -45,7 +45,7 @@ export default (url, outputDirpath = process.cwd()) => {
         const axiosConfig = {
           method: 'get',
           url: href,
-          responseType: 'stream',
+          responseType: 'arraybuffer',
         };
 
         return axios.request(axiosConfig);
@@ -58,13 +58,12 @@ export default (url, outputDirpath = process.cwd()) => {
 
       const tasks = responses.map((response) => {
         const { data } = response;
-        const asset = data.toString();
         const href = response.config.url;
         const assetpath = path.resolve(config.dirpath, buildName.file(href));
 
         return {
           title: `write asset ${href}`,
-          task: () => fs.writeFile(assetpath, asset),
+          task: () => fs.writeFile(assetpath, data),
         };
       });
 
