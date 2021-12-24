@@ -15,7 +15,7 @@ export default (url, outputDirpath = process.cwd()) => {
 
   const pageName = buildName.file(url);
   const dirName = buildName.dir(url);
-  const pagepath = `${path.resolve(path.join(outputDirpath, pageName))}.html`;
+  const pagepath = path.resolve(path.join(outputDirpath, pageName));
   const dirpath = path.resolve(path.join(outputDirpath, dirName));
 
   log(`path for page: ${pagepath}`);
