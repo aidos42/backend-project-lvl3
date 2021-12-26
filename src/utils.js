@@ -26,9 +26,9 @@ const buildName = {
 
 const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
 
-const buildFullSrc = (src, hostname) => {
+const buildFullSrc = (src, hostname, protocol) => {
   if (!hasScheme(src)) {
-    const fullHostname = hasScheme(hostname) ? hostname : `https:${hostname}`;
+    const fullHostname = hasScheme(hostname) ? hostname : `${protocol}${hostname}`;
 
     return new URL(src, fullHostname);
   }
@@ -43,7 +43,7 @@ const isSameOrigin = (url1, url2) => {
   return hostname1 === hostname2;
 };
 
-const getAssets = (html, { url, dirName }) => {
+const getAssets = (html, { url, dirName, protocol }) => {
   const { hostname, pathname } = new URL(url);
   const $ = cheerio.load(html);
   const elements = ['img', 'link', 'script'];
@@ -53,7 +53,7 @@ const getAssets = (html, { url, dirName }) => {
       const attribute = attributes.find((value) => _.has(item.attribs, value));
       const oldSrc = item.attribs[attribute];
       const origin = path.join(hostname, pathname);
-      const { href } = buildFullSrc(oldSrc, origin);
+      const { href } = buildFullSrc(oldSrc, origin, protocol);
 
       if (!isSameOrigin(url, href)) {
         return {};

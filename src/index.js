@@ -17,12 +17,13 @@ export default (url, outputDirpath = process.cwd()) => {
   const dirName = buildName.dir(url);
   const pagepath = path.resolve(path.join(outputDirpath, pageName));
   const dirpath = path.resolve(path.join(outputDirpath, dirName));
+  const { protocol } = new URL(url);
 
   log(`path for page: ${pagepath}`);
   log(`path for assets dir ${dirpath}`);
 
   const config = {
-    url, outputDirpath, pageName, pagepath, dirName, dirpath,
+    url, outputDirpath, pageName, pagepath, dirName, dirpath, protocol,
   };
 
   return axios.get(config.url)
