@@ -5,7 +5,9 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/ba698f0a3a1c38e36b7d/maintainability)](https://codeclimate.com/github/aidos42/backend-project-lvl3/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/ba698f0a3a1c38e36b7d/test_coverage)](https://codeclimate.com/github/aidos42/backend-project-lvl3/test_coverage)
 
-Page loader utility.
+Page loader is a command line utility that downloads pages from the Web.
+
+[More about project...](https://ru.hexlet.io/programs/backend/projects/4)
 
 ### Usage
 ```
@@ -18,4 +20,4 @@ Options:
 ```
 
 ### Asciinema
-[![asciicast](https://asciinema.org/a/Bqi9hsMLDau5L1OpD30aKfzBn.svg)](https://asciinema.org/a/Bqi9hsMLDau5L1OpD30aKfzBn)
+[![asciicast](https://asciinema.org/a/2jbPaOTVFMFtAXo5PfnGX54JQ.svg)](https://asciinema.org/a/2jbPaOTVFMFtAXo5PfnGX54JQ)
