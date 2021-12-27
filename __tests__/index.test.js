@@ -9,115 +9,116 @@ nock.disableNetConnect();
 
 const getFixturePath = (filename) => path.join(process.cwd(), '__fixtures__', filename);
 
-const fixturesSiteCom = {
-  base: 'https://site.com/',
-  dir: 'site-com-blog-about_files',
-  page: {
-    url: 'https://site.com/blog/about',
-    path: '/blog/about',
-    before: 'site-com-blog-about.html',
-    after: '/expected/site-com-blog-about.html',
+const fixtures = {
+  siteCom: {
+    base: 'https://site.com/',
+    dir: 'site-com-blog-about_files',
+    page: {
+      url: 'https://site.com/blog/about',
+      path: '/blog/about',
+      before: 'site-com-blog-about.html',
+      after: '/expected/site-com-blog-about.html',
+    },
+    img: {
+      path: '/photos/me.jpg',
+      name: 'site-com-photos-me.jpg',
+      expected: '/expected/site-com-blog-about_files/site-com-photos-me.jpg',
+    },
+    css: {
+      path: '/blog/about/assets/styles.css',
+      name: 'site-com-blog-about-assets-styles.css',
+      expected: '/expected/site-com-blog-about_files/site-com-blog-about-assets-styles.css',
+    },
+    link: {
+      path: '/blog/about',
+      name: 'site-com-blog-about.html',
+      expected: '/expected/site-com-blog-about_files/site-com-blog-about.html',
+    },
+    script: {
+      path: '/assets/scripts.js',
+      name: 'site-com-assets-scripts.js',
+      expected: '/expected/site-com-blog-about_files/site-com-assets-scripts.js',
+    },
   },
-  img: {
-    path: '/photos/me.jpg',
-    name: 'site-com-photos-me.jpg',
-    expected: '/expected/site-com-blog-about_files/site-com-photos-me.jpg',
-  },
-  css: {
-    path: '/blog/about/assets/styles.css',
-    name: 'site-com-blog-about-assets-styles.css',
-    expected: '/expected/site-com-blog-about_files/site-com-blog-about-assets-styles.css',
-  },
-  link: {
-    path: '/blog/about',
-    name: 'site-com-blog-about.html',
-    expected: '/expected/site-com-blog-about_files/site-com-blog-about.html',
-  },
-  script: {
-    path: '/assets/scripts.js',
-    name: 'site-com-assets-scripts.js',
-    expected: '/expected/site-com-blog-about_files/site-com-assets-scripts.js',
+  localhost: {
+    base: 'http://localhost/',
+    dir: 'localhost-blog-about_files',
+    page: {
+      url: 'http://localhost/blog/about',
+      path: '/blog/about',
+      before: 'localhost-blog-about.html',
+      after: '/expected/localhost-blog-about.html',
+    },
+    img: {
+      path: '/photos/me.jpg',
+      name: 'localhost-photos-me.jpg',
+      expected: '/expected/localhost-blog-about_files/localhost-photos-me.jpg',
+    },
+    css: {
+      path: '/blog/about/assets/styles.css',
+      name: 'localhost-blog-about-assets-styles.css',
+      expected: '/expected/localhost-blog-about_files/localhost-blog-about-assets-styles.css',
+    },
+    link: {
+      path: '/blog/about',
+      name: 'localhost-blog-about.html',
+      expected: '/expected/localhost-blog-about_files/localhost-blog-about.html',
+    },
+    script: {
+      path: '/assets/scripts.js',
+      name: 'localhost-assets-scripts.js',
+      expected: '/expected/localhost-blog-about_files/localhost-assets-scripts.js',
+    },
   },
 };
 
-const fixturesLocalhost = {
-  base: 'http://localhost/',
-  dir: 'localhost-blog-about_files',
-  page: {
-    url: 'http://localhost/blog/about',
-    path: '/blog/about',
-    before: 'localhost-blog-about.html',
-    after: '/expected/localhost-blog-about.html',
-  },
-  img: {
-    path: '/photos/me.jpg',
-    name: 'localhost-photos-me.jpg',
-    expected: '/expected/localhost-blog-about_files/localhost-photos-me.jpg',
-  },
-  css: {
-    path: '/blog/about/assets/styles.css',
-    name: 'localhost-blog-about-assets-styles.css',
-    expected: '/expected/localhost-blog-about_files/localhost-blog-about-assets-styles.css',
-  },
-  link: {
-    path: '/blog/about',
-    name: 'localhost-blog-about.html',
-    expected: '/expected/localhost-blog-about_files/localhost-blog-about.html',
-  },
-  script: {
-    path: '/assets/scripts.js',
-    name: 'localhost-assets-scripts.js',
-    expected: '/expected/localhost-blog-about_files/localhost-assets-scripts.js',
-  },
-};
+let tempDirpath;
+let page;
+let expectedPage;
+let expectedImg;
+let expectedCSS;
+let expectedLink;
+let expectedScript;
 
 describe('site.com fixtures cases', () => {
-  let tempDirpath;
-  let page;
-  let expectedPage;
-  let expectedImg;
-  let expectedCSS;
-  let expectedLink;
-  let expectedScript;
-
   beforeEach(async () => {
     await fs.rmdir(tempDirpath, { recursive: true, force: true }).catch(_.noop);
     tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    page = await fs.readFile(getFixturePath(fixturesSiteCom.page.before), 'utf-8');
-    expectedPage = await fs.readFile(getFixturePath(fixturesSiteCom.page.after), 'utf-8');
-    expectedImg = await fs.readFile(getFixturePath(fixturesSiteCom.img.expected), 'utf-8');
-    expectedCSS = await fs.readFile(getFixturePath(fixturesSiteCom.css.expected), 'utf-8');
-    expectedLink = await fs.readFile(getFixturePath(fixturesSiteCom.link.expected), 'utf-8');
-    expectedScript = await fs.readFile(getFixturePath(fixturesSiteCom.script.expected), 'utf-8');
+    page = await fs.readFile(getFixturePath(fixtures.siteCom.page.before), 'utf-8');
+    expectedPage = await fs.readFile(getFixturePath(fixtures.siteCom.page.after), 'utf-8');
+    expectedImg = await fs.readFile(getFixturePath(fixtures.siteCom.img.expected), 'utf-8');
+    expectedCSS = await fs.readFile(getFixturePath(fixtures.siteCom.css.expected), 'utf-8');
+    expectedLink = await fs.readFile(getFixturePath(fixtures.siteCom.link.expected), 'utf-8');
+    expectedScript = await fs.readFile(getFixturePath(fixtures.siteCom.script.expected), 'utf-8');
   });
 
   describe('positive case', () => {
     test('should work correct', async () => {
-      nock(fixturesSiteCom.base)
-        .get(fixturesSiteCom.page.path)
+      nock(fixtures.siteCom.base)
+        .get(fixtures.siteCom.page.path)
         .reply(200, page)
-        .get(fixturesSiteCom.img.path)
+        .get(fixtures.siteCom.img.path)
         .reply(200, expectedImg)
-        .get(fixturesSiteCom.css.path)
+        .get(fixtures.siteCom.css.path)
         .reply(200, expectedCSS)
-        .get(fixturesSiteCom.link.path)
+        .get(fixtures.siteCom.link.path)
         .reply(200, expectedLink)
-        .get(fixturesSiteCom.script.path)
+        .get(fixtures.siteCom.script.path)
         .reply(200, expectedScript);
 
-      await pageLoader(fixturesSiteCom.page.url, tempDirpath);
+      await pageLoader(fixtures.siteCom.page.url, tempDirpath);
 
       const results = await fs.readdir(tempDirpath);
       const resultPage = await fs.readFile(path.join(tempDirpath, results[0]), 'utf-8');
-      const resultDir = await fs.access(path.join(tempDirpath, fixturesSiteCom.dir));
+      const resultDir = await fs.access(path.join(tempDirpath, fixtures.siteCom.dir));
       const resultImg = await fs.access(path
-        .join(tempDirpath, fixturesSiteCom.dir, fixturesSiteCom.img.name));
+        .join(tempDirpath, fixtures.siteCom.dir, fixtures.siteCom.img.name));
       const resultCSS = await fs.access(path
-        .join(tempDirpath, fixturesSiteCom.dir, fixturesSiteCom.css.name));
+        .join(tempDirpath, fixtures.siteCom.dir, fixtures.siteCom.css.name));
       const resultLink = await fs.access(path
-        .join(tempDirpath, fixturesSiteCom.dir, fixturesSiteCom.link.name));
+        .join(tempDirpath, fixtures.siteCom.dir, fixtures.siteCom.link.name));
       const resultScript = await fs.access(path
-        .join(tempDirpath, fixturesSiteCom.dir, fixturesSiteCom.script.name));
+        .join(tempDirpath, fixtures.siteCom.dir, fixtures.siteCom.script.name));
 
       expect(resultPage).toBe(expectedPage);
       expect(resultDir).toBeUndefined();
@@ -131,16 +132,16 @@ describe('site.com fixtures cases', () => {
   describe('negative cases: filesystem errors', () => {
     beforeEach(async () => {
       nock.cleanAll();
-      nock(fixturesSiteCom.base)
-        .get(fixturesSiteCom.page.path)
+      nock(fixtures.siteCom.base)
+        .get(fixtures.siteCom.page.path)
         .reply(200, page)
-        .get(fixturesSiteCom.img.path)
+        .get(fixtures.siteCom.img.path)
         .reply(200, expectedImg)
-        .get(fixturesSiteCom.css.path)
+        .get(fixtures.siteCom.css.path)
         .reply(200, expectedCSS)
-        .get(fixturesSiteCom.link.path)
+        .get(fixtures.siteCom.link.path)
         .reply(200, expectedLink)
-        .get(fixturesSiteCom.script.path)
+        .get(fixtures.siteCom.script.path)
         .reply(200, expectedScript);
     });
 
@@ -148,7 +149,7 @@ describe('site.com fixtures cases', () => {
       const wrongTempDirPath = path.join(tempDirpath, '/wrong-folder');
 
       await expect(async () => {
-        await pageLoader(fixturesSiteCom.page.url, wrongTempDirPath);
+        await pageLoader(fixtures.siteCom.page.url, wrongTempDirPath);
       }).rejects.toThrow(/ENOENT/);
     });
 
@@ -156,7 +157,7 @@ describe('site.com fixtures cases', () => {
       await fs.chmod(tempDirpath, 0);
 
       await expect(async () => {
-        await pageLoader(fixturesSiteCom.page.url, tempDirpath);
+        await pageLoader(fixtures.siteCom.page.url, tempDirpath);
       }).rejects.toThrow(/EACCES/);
     });
   });
@@ -167,84 +168,76 @@ describe('site.com fixtures cases', () => {
     });
 
     test('should throw error if timeout', async () => {
-      nock(fixturesSiteCom.base)
-        .get(fixturesSiteCom.page.path)
+      nock(fixtures.siteCom.base)
+        .get(fixtures.siteCom.page.path)
         .replyWithError({ code: 'ETIMEDOUT' });
 
       await expect(async () => {
-        await pageLoader(fixturesSiteCom.page.url, tempDirpath);
+        await pageLoader(fixtures.siteCom.page.url, tempDirpath);
       }).rejects.toThrow(/ETIMEDOUT/);
     });
 
     test('should throw error if returns 404', async () => {
-      nock(fixturesSiteCom.base)
-        .get(fixturesSiteCom.page.path)
+      nock(fixtures.siteCom.base)
+        .get(fixtures.siteCom.page.path)
         .reply(404);
 
       await expect(async () => {
-        await pageLoader(fixturesSiteCom.page.url, tempDirpath);
+        await pageLoader(fixtures.siteCom.page.url, tempDirpath);
       }).rejects.toThrow(/404/);
     });
 
     test('should throw error if returns 500', async () => {
-      nock(fixturesSiteCom.base)
-        .get(fixturesSiteCom.page.path)
+      nock(fixtures.siteCom.base)
+        .get(fixtures.siteCom.page.path)
         .reply(500);
 
       await expect(async () => {
-        await pageLoader(fixturesSiteCom.page.url, tempDirpath);
+        await pageLoader(fixtures.siteCom.page.url, tempDirpath);
       }).rejects.toThrow(/500/);
     });
   });
 });
 
 describe('localhost fixtures cases', () => {
-  let tempDirpath;
-  let page;
-  let expectedPage;
-  let expectedImg;
-  let expectedCSS;
-  let expectedLink;
-  let expectedScript;
-
   beforeEach(async () => {
     await fs.rmdir(tempDirpath, { recursive: true, force: true }).catch(_.noop);
     tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-    page = await fs.readFile(getFixturePath(fixturesLocalhost.page.before), 'utf-8');
-    expectedPage = await fs.readFile(getFixturePath(fixturesLocalhost.page.after), 'utf-8');
-    expectedImg = await fs.readFile(getFixturePath(fixturesLocalhost.img.expected), 'utf-8');
-    expectedCSS = await fs.readFile(getFixturePath(fixturesLocalhost.css.expected), 'utf-8');
-    expectedLink = await fs.readFile(getFixturePath(fixturesLocalhost.link.expected), 'utf-8');
-    expectedScript = await fs.readFile(getFixturePath(fixturesLocalhost.script.expected), 'utf-8');
+    page = await fs.readFile(getFixturePath(fixtures.localhost.page.before), 'utf-8');
+    expectedPage = await fs.readFile(getFixturePath(fixtures.localhost.page.after), 'utf-8');
+    expectedImg = await fs.readFile(getFixturePath(fixtures.localhost.img.expected), 'utf-8');
+    expectedCSS = await fs.readFile(getFixturePath(fixtures.localhost.css.expected), 'utf-8');
+    expectedLink = await fs.readFile(getFixturePath(fixtures.localhost.link.expected), 'utf-8');
+    expectedScript = await fs.readFile(getFixturePath(fixtures.localhost.script.expected), 'utf-8');
   });
 
   describe('positive case', () => {
     test('should work correct', async () => {
-      nock(fixturesLocalhost.base)
-        .get(fixturesLocalhost.page.path)
+      nock(fixtures.localhost.base)
+        .get(fixtures.localhost.page.path)
         .reply(200, page)
-        .get(fixturesLocalhost.img.path)
+        .get(fixtures.localhost.img.path)
         .reply(200, expectedImg)
-        .get(fixturesLocalhost.css.path)
+        .get(fixtures.localhost.css.path)
         .reply(200, expectedCSS)
-        .get(fixturesLocalhost.link.path)
+        .get(fixtures.localhost.link.path)
         .reply(200, expectedLink)
-        .get(fixturesLocalhost.script.path)
+        .get(fixtures.localhost.script.path)
         .reply(200, expectedScript);
 
-      await pageLoader(fixturesLocalhost.page.url, tempDirpath);
+      await pageLoader(fixtures.localhost.page.url, tempDirpath);
 
       const results = await fs.readdir(tempDirpath);
       const resultPage = await fs.readFile(path.join(tempDirpath, results[0]), 'utf-8');
-      const resultDir = await fs.access(path.join(tempDirpath, fixturesLocalhost.dir));
+      const resultDir = await fs.access(path.join(tempDirpath, fixtures.localhost.dir));
       const resultImg = await fs.access(path
-        .join(tempDirpath, fixturesLocalhost.dir, fixturesLocalhost.img.name));
+        .join(tempDirpath, fixtures.localhost.dir, fixtures.localhost.img.name));
       const resultCSS = await fs.access(path
-        .join(tempDirpath, fixturesLocalhost.dir, fixturesLocalhost.css.name));
+        .join(tempDirpath, fixtures.localhost.dir, fixtures.localhost.css.name));
       const resultLink = await fs.access(path
-        .join(tempDirpath, fixturesLocalhost.dir, fixturesLocalhost.link.name));
+        .join(tempDirpath, fixtures.localhost.dir, fixtures.localhost.link.name));
       const resultScript = await fs.access(path
-        .join(tempDirpath, fixturesLocalhost.dir, fixturesLocalhost.script.name));
+        .join(tempDirpath, fixtures.localhost.dir, fixtures.localhost.script.name));
 
       expect(resultPage).toBe(expectedPage);
       expect(resultDir).toBeUndefined();
@@ -258,16 +251,16 @@ describe('localhost fixtures cases', () => {
   describe('negative cases: filesystem errors', () => {
     beforeEach(async () => {
       nock.cleanAll();
-      nock(fixturesLocalhost.base)
-        .get(fixturesLocalhost.page.path)
+      nock(fixtures.localhost.base)
+        .get(fixtures.localhost.page.path)
         .reply(200, page)
-        .get(fixturesLocalhost.img.path)
+        .get(fixtures.localhost.img.path)
         .reply(200, expectedImg)
-        .get(fixturesLocalhost.css.path)
+        .get(fixtures.localhost.css.path)
         .reply(200, expectedCSS)
-        .get(fixturesLocalhost.link.path)
+        .get(fixtures.localhost.link.path)
         .reply(200, expectedLink)
-        .get(fixturesLocalhost.script.path)
+        .get(fixtures.localhost.script.path)
         .reply(200, expectedScript);
     });
 
@@ -275,7 +268,7 @@ describe('localhost fixtures cases', () => {
       const wrongTempDirPath = path.join(tempDirpath, '/wrong-folder');
 
       await expect(async () => {
-        await pageLoader(fixturesLocalhost.page.url, wrongTempDirPath);
+        await pageLoader(fixtures.localhost.page.url, wrongTempDirPath);
       }).rejects.toThrow(/ENOENT/);
     });
 
@@ -283,7 +276,7 @@ describe('localhost fixtures cases', () => {
       await fs.chmod(tempDirpath, 0);
 
       await expect(async () => {
-        await pageLoader(fixturesLocalhost.page.url, tempDirpath);
+        await pageLoader(fixtures.localhost.page.url, tempDirpath);
       }).rejects.toThrow(/EACCES/);
     });
   });
@@ -294,32 +287,32 @@ describe('localhost fixtures cases', () => {
     });
 
     test('should throw error if timeout', async () => {
-      nock(fixturesLocalhost.base)
-        .get(fixturesLocalhost.page.path)
+      nock(fixtures.localhost.base)
+        .get(fixtures.localhost.page.path)
         .replyWithError({ code: 'ETIMEDOUT' });
 
       await expect(async () => {
-        await pageLoader(fixturesLocalhost.page.url, tempDirpath);
+        await pageLoader(fixtures.localhost.page.url, tempDirpath);
       }).rejects.toThrow(/ETIMEDOUT/);
     });
 
     test('should throw error if returns 404', async () => {
-      nock(fixturesLocalhost.base)
-        .get(fixturesLocalhost.page.path)
+      nock(fixtures.localhost.base)
+        .get(fixtures.localhost.page.path)
         .reply(404);
 
       await expect(async () => {
-        await pageLoader(fixturesLocalhost.page.url, tempDirpath);
+        await pageLoader(fixtures.localhost.page.url, tempDirpath);
       }).rejects.toThrow(/404/);
     });
 
     test('should throw error if returns 500', async () => {
-      nock(fixturesLocalhost.base)
-        .get(fixturesLocalhost.page.path)
+      nock(fixtures.localhost.base)
+        .get(fixtures.localhost.page.path)
         .reply(500);
 
       await expect(async () => {
-        await pageLoader(fixturesLocalhost.page.url, tempDirpath);
+        await pageLoader(fixtures.localhost.page.url, tempDirpath);
       }).rejects.toThrow(/500/);
     });
   });
