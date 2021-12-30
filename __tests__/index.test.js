@@ -1,13 +1,17 @@
 import os from 'os';
-import path from 'path';
+import path, { dirname } from 'path';
 import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
 import _ from 'lodash';
 import nock from 'nock';
 import pageLoader from '../src/index.js';
 
 nock.disableNetConnect();
 
-const getFixturePath = (filename) => path.join(process.cwd(), '__fixtures__', filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 
 const fixtures = {
   base: 'https://ru.hexlet.io/',
@@ -41,38 +45,43 @@ const fixtures = {
 };
 
 let tempDirpath;
-let page;
 let expectedPage;
-let expectedImg;
-let expectedCSS;
-let expectedLink;
-let expectedScript;
+const page = getFixturePath(fixtures.page.before);
+const expectedImg = getFixturePath(fixtures.img.expected);
+const expectedCSS = getFixturePath(fixtures.css.expected);
+const expectedLink = getFixturePath(fixtures.link.expected);
+const expectedScript = getFixturePath(fixtures.script.expected);
 
 beforeEach(async () => {
   await fs.rmdir(tempDirpath, { recursive: true, force: true }).catch(_.noop);
   tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  page = await fs.readFile(getFixturePath(fixtures.page.before), 'utf-8');
   expectedPage = await fs.readFile(getFixturePath(fixtures.page.after), 'utf-8');
-  expectedImg = await fs.readFile(getFixturePath(fixtures.img.expected), 'utf-8');
-  expectedCSS = await fs.readFile(getFixturePath(fixtures.css.expected), 'utf-8');
-  expectedLink = await fs.readFile(getFixturePath(fixtures.link.expected), 'utf-8');
-  expectedScript = await fs.readFile(getFixturePath(fixtures.script.expected), 'utf-8');
+
+  nock(fixtures.base)
+    .get(fixtures.page.path)
+    .replyWithFile(200, page, {
+      'Content-Type': 'text/html',
+    })
+    .get(fixtures.img.path)
+    .replyWithFile(200, expectedImg, {
+      'Content-Type': 'image/png',
+    })
+    .get(fixtures.css.path)
+    .replyWithFile(200, expectedCSS, {
+      'Content-Type': 'text/css',
+    })
+    .get(fixtures.link.path)
+    .replyWithFile(200, expectedLink, {
+      'Content-Type': 'text/html',
+    })
+    .get(fixtures.script.path)
+    .replyWithFile(200, expectedScript, {
+      'Content-Type': 'text/javascript',
+    });
 });
 
 describe('positive case', () => {
   test('should work correct', async () => {
-    nock(fixtures.base)
-      .get(fixtures.page.path)
-      .reply(200, page)
-      .get(fixtures.img.path)
-      .reply(200, expectedImg)
-      .get(fixtures.css.path)
-      .reply(200, expectedCSS)
-      .get(fixtures.link.path)
-      .reply(200, expectedLink)
-      .get(fixtures.script.path)
-      .reply(200, expectedScript);
-
     await pageLoader(fixtures.page.url, tempDirpath);
 
     const results = await fs.readdir(tempDirpath);
@@ -94,21 +103,6 @@ describe('positive case', () => {
 });
 
 describe('negative cases: filesystem errors', () => {
-  beforeEach(async () => {
-    nock.cleanAll();
-    nock(fixtures.base)
-      .get(fixtures.page.path)
-      .reply(200, page)
-      .get(fixtures.img.path)
-      .reply(200, expectedImg)
-      .get(fixtures.css.path)
-      .reply(200, expectedCSS)
-      .get(fixtures.link.path)
-      .reply(200, expectedLink)
-      .get(fixtures.script.path)
-      .reply(200, expectedScript);
-  });
-
   test('should throw error if there is wrong folder', async () => {
     const wrongTempDirPath = path.join(tempDirpath, '/wrong-folder');
 
@@ -118,10 +112,9 @@ describe('negative cases: filesystem errors', () => {
   });
 
   test('should throw error if there is no access to folder', async () => {
-    await fs.chmod(tempDirpath, 0);
-
+    const unaccessableDir = '/root';
     await expect(async () => {
-      await pageLoader(fixtures.page.url, tempDirpath);
+      await pageLoader(fixtures.page.url, unaccessableDir);
     }).rejects.toThrow(/EACCES/);
   });
 });
