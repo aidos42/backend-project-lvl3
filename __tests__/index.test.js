@@ -42,6 +42,20 @@ const fixtures = {
     name: 'ru-hexlet-io-packs-js-runtime.js',
     expected: '/expected/ru-hexlet-io-courses_files/runtime.js',
   },
+  error: {
+    server: {
+      path: '/internal-server-error.html',
+      url: 'https://ru.hexlet.io/internal-server-error.html',
+    },
+    notFound: {
+      path: '/not-found.html',
+      url: 'https://ru.hexlet.io/not-found.html',
+    },
+    enoent: {
+      path: '/ENOENT.html',
+      url: 'https://ru.hexlet.io/ENOENT.html',
+    },
+  },
 };
 
 let tempDirpath;
@@ -120,37 +134,33 @@ describe('negative cases: filesystem errors', () => {
 });
 
 describe('negative cases: network errors', () => {
-  beforeEach(async () => {
-    nock.cleanAll();
-  });
-
   test('should throw error if timeout', async () => {
     nock(fixtures.base)
-      .get(fixtures.page.path)
+      .get(fixtures.error.enoent.path)
       .replyWithError({ code: 'ETIMEDOUT' });
 
     await expect(async () => {
-      await pageLoader(fixtures.page.url, tempDirpath);
+      await pageLoader(fixtures.error.enoent.url, tempDirpath);
     }).rejects.toThrow(/ETIMEDOUT/);
   });
 
   test('should throw error if returns 404', async () => {
     nock(fixtures.base)
-      .get(fixtures.page.path)
+      .get(fixtures.error.notFound.path)
       .reply(404);
 
     await expect(async () => {
-      await pageLoader(fixtures.page.url, tempDirpath);
+      await pageLoader(fixtures.error.notFound.url, tempDirpath);
     }).rejects.toThrow(/404/);
   });
 
   test('should throw error if returns 500', async () => {
     nock(fixtures.base)
-      .get(fixtures.page.path)
+      .get(fixtures.error.server.path)
       .reply(500);
 
     await expect(async () => {
-      await pageLoader(fixtures.page.url, tempDirpath);
+      await pageLoader(fixtures.error.server.url, tempDirpath);
     }).rejects.toThrow(/500/);
   });
 });

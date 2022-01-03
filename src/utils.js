@@ -26,7 +26,7 @@ const buildName = {
 
 const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
 
-const buildFullSrc = (src, hostname, protocol) => {
+const buildFullSrc = (src, hostname, protocol = 'https:') => {
   if (!hasScheme(src)) {
     const fullHostname = hasScheme(hostname) ? hostname : `${protocol}${hostname}`;
 
