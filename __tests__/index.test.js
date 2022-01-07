@@ -121,7 +121,7 @@ describe('negative cases: filesystem errors', () => {
 });
 
 describe('negative cases: network errors', () => {
-  test.each(networkErrorsList)('%s', async (errorText, errorCode) => {
+  test.each(networkErrorsList)('should throw if there network error: %s', async (errorText, errorCode) => {
     nock(networkFixtures.base).get(networkFixtures.error.path).reply(errorCode);
     const regexp = new RegExp(errorText);
     await expect(async () => {
@@ -129,7 +129,7 @@ describe('negative cases: network errors', () => {
     }).rejects.toThrow(regexp);
   });
 
-  test('timeout', async () => {
+  test('should throw if there network error: timeout', async () => {
     nock(networkFixtures.base)
       .get(networkFixtures.error.path)
       .replyWithError({ code: 'ETIMEDOUT' });
