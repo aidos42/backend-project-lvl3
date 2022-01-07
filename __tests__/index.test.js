@@ -30,33 +30,39 @@ const networkFixtures = {
   },
 };
 
-const dataFixtures = {
-  page: {
-    path: '/courses',
-    origin: getFixturePath('ru-hexlet-io-courses.html'),
-    expected: getFixturePath('/expected/ru-hexlet-io-courses.html'),
-  },
-  img: {
-    path: '/assets/professions/nodejs.png',
+const pageFixture = {
+  path: '/courses',
+  origin: getFixturePath('ru-hexlet-io-courses.html'),
+  expected: getFixturePath('/expected/ru-hexlet-io-courses.html'),
+  contentType: 'text/html',
+};
+
+const assetsFixtures = [
+  {
+    fixturePath: '/assets/professions/nodejs.png',
     name: 'ru-hexlet-io-assets-professions-nodejs.png',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/nodejs.png'),
+    contentType: 'image/png',
   },
-  css: {
-    path: '/assets/application.css',
+  {
+    fixturePath: '/assets/application.css',
     name: 'ru-hexlet-io-assets-application.css',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/application.css'),
+    contentType: 'text/css',
   },
-  link: {
-    path: '/courses',
+  {
+    fixturePath: '/courses',
     name: 'ru-hexlet-io-courses.html',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/ru-hexlet-io-courses.html'),
+    contentType: 'text/html',
   },
-  script: {
-    path: '/packs/js/runtime.js',
+  {
+    fixturePath: '/packs/js/runtime.js',
     name: 'ru-hexlet-io-packs-js-runtime.js',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/runtime.js'),
+    contentType: 'text/javascript',
   },
-};
+];
 
 let tempDirpath;
 
@@ -65,26 +71,14 @@ beforeEach(async () => {
   tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
   nock(networkFixtures.base)
-    .get(dataFixtures.page.path)
-    .replyWithFile(200, dataFixtures.page.origin, {
-      'Content-Type': 'text/html',
-    })
-    .get(dataFixtures.img.path)
-    .replyWithFile(200, dataFixtures.img.expected, {
-      'Content-Type': 'image/png',
-    })
-    .get(dataFixtures.css.path)
-    .replyWithFile(200, dataFixtures.css.expected, {
-      'Content-Type': 'text/css',
-    })
-    .get(dataFixtures.link.path)
-    .replyWithFile(200, dataFixtures.link.expected, {
-      'Content-Type': 'text/html',
-    })
-    .get(dataFixtures.script.path)
-    .replyWithFile(200, dataFixtures.script.expected, {
-      'Content-Type': 'text/javascript',
-    });
+    .get(pageFixture.path)
+    .replyWithFile(200, pageFixture.origin, { 'Content-Type': pageFixture.contentType });
+
+  assetsFixtures.forEach(({ fixturePath, expected, contentType }) => {
+    nock(networkFixtures.base)
+      .get(fixturePath)
+      .replyWithFile(200, expected, { 'Content-Type': contentType });
+  });
 });
 
 describe('positive cases', () => {
@@ -93,29 +87,19 @@ describe('positive cases', () => {
 
     const results = await fs.readdir(tempDirpath);
     const resultPage = await fs.readFile(path.join(tempDirpath, results[0]), 'utf-8');
-    const expected = await fs.readFile(dataFixtures.page.expected, 'utf-8');
+    const expected = await fs.readFile(pageFixture.expected, 'utf-8');
 
     expect(resultPage).toBe(expected);
   });
 
-  test('should download assets', async () => {
+  test.each(assetsFixtures)('should download asset $name', async ({ name, expected }) => {
     await pageLoader(networkFixtures.page.url, tempDirpath);
 
-    const resultDir = await fs.access(path.join(tempDirpath, networkFixtures.dir));
-    const resultImg = await fs.access(path.join(tempDirpath,
-      networkFixtures.dir, dataFixtures.img.name));
-    const resultCSS = await fs.access(path.join(tempDirpath,
-      networkFixtures.dir, dataFixtures.css.name));
-    const resultLink = await fs.access(path.join(tempDirpath,
-      networkFixtures.dir, dataFixtures.link.name));
-    const resultScript = await fs.access(path
-      .join(tempDirpath, networkFixtures.dir, dataFixtures.script.name));
+    const resultAssetPath = path.join(tempDirpath, networkFixtures.dir, name);
+    const resultAsset = await fs.readFile(resultAssetPath, 'utf-8');
+    const expectedAsset = await fs.readFile(expected, 'utf-8');
 
-    expect(resultDir).toBeUndefined();
-    expect(resultImg).toBeUndefined();
-    expect(resultCSS).toBeUndefined();
-    expect(resultLink).toBeUndefined();
-    expect(resultScript).toBeUndefined();
+    expect(resultAsset).toBe(expectedAsset);
   });
 });
 
