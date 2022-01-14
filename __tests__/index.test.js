@@ -2,7 +2,6 @@ import os from 'os';
 import path, { dirname } from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
-import _ from 'lodash';
 import nock from 'nock';
 import pageLoader from '../src/index.js';
 
@@ -12,6 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
+const readFile = (filepath) => fs.readFile(filepath, 'utf-8');
 
 const networkErrorsList = [
   ['404', 404],
@@ -34,7 +34,6 @@ const pageFixture = {
   path: '/courses',
   origin: getFixturePath('ru-hexlet-io-courses.html'),
   expected: getFixturePath('/expected/ru-hexlet-io-courses.html'),
-  contentType: 'text/html',
 };
 
 const assetsFixtures = [
@@ -42,100 +41,90 @@ const assetsFixtures = [
     fixturePath: '/assets/professions/nodejs.png',
     name: 'ru-hexlet-io-assets-professions-nodejs.png',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/nodejs.png'),
-    contentType: 'image/png',
   },
   {
     fixturePath: '/assets/application.css',
     name: 'ru-hexlet-io-assets-application.css',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/application.css'),
-    contentType: 'text/css',
   },
   {
     fixturePath: '/courses',
     name: 'ru-hexlet-io-courses.html',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/ru-hexlet-io-courses.html'),
-    contentType: 'text/html',
   },
   {
     fixturePath: '/packs/js/runtime.js',
     name: 'ru-hexlet-io-packs-js-runtime.js',
     expected: getFixturePath('/expected/ru-hexlet-io-courses_files/runtime.js'),
-    contentType: 'text/javascript',
   },
 ];
 
 let tempDirpath;
 
-beforeEach(async () => {
-  await fs.rmdir(tempDirpath, { recursive: true, force: true }).catch(_.noop);
-  tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-
+beforeAll(async () => {
   nock(networkFixtures.base)
+    .persist()
     .get(pageFixture.path)
-    .replyWithFile(200, pageFixture.origin, { 'Content-Type': pageFixture.contentType });
+    .replyWithFile(200, pageFixture.origin);
 
-  assetsFixtures.forEach(({ fixturePath, expected, contentType }) => {
+  assetsFixtures.forEach(({ fixturePath, expected }) => {
     nock(networkFixtures.base)
+      .persist()
       .get(fixturePath)
-      .replyWithFile(200, expected, { 'Content-Type': contentType });
+      .replyWithFile(200, expected);
   });
 });
 
 describe('positive cases', () => {
+  beforeEach(async () => {
+    tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  });
+
   test('page content should match expected', async () => {
     await pageLoader(networkFixtures.page.url, tempDirpath);
 
-    const results = await fs.readdir(tempDirpath);
-    const resultPage = await fs.readFile(path.join(tempDirpath, results[0]), 'utf-8');
-    const expected = await fs.readFile(pageFixture.expected, 'utf-8');
+    const result = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
+    const expected = await readFile(pageFixture.expected);
 
-    expect(resultPage).toBe(expected);
+    expect(result).toBe(expected);
   });
 
   test.each(assetsFixtures)('should download asset $name', async ({ name, expected }) => {
     await pageLoader(networkFixtures.page.url, tempDirpath);
 
     const resultAssetPath = path.join(tempDirpath, networkFixtures.dir, name);
-    const resultAsset = await fs.readFile(resultAssetPath, 'utf-8');
-    const expectedAsset = await fs.readFile(expected, 'utf-8');
+    const resultAsset = await readFile(resultAssetPath);
+    const expectedAsset = await readFile(expected);
 
     expect(resultAsset).toBe(expectedAsset);
   });
 });
 
-describe('negative cases: filesystem errors', () => {
-  test('should throw error if there is wrong folder', async () => {
-    const wrongTempDirPath = path.join(tempDirpath, '/wrong-folder');
+describe('negative cases', () => {
+  describe('filesystem errors', () => {
+    test('should throw error if there is wrong folder', async () => {
+      await expect(pageLoader(networkFixtures.page.url, path.join(tempDirpath, '/wrong-folder'))).rejects.toThrow('ENOENT');
+    });
 
-    await expect(async () => {
-      await pageLoader(networkFixtures.page.url, wrongTempDirPath);
-    }).rejects.toThrow(/ENOENT/);
+    test('should throw error if there is no access to folder', async () => {
+      const unaccessableDir = '/var/lib';
+      await expect(pageLoader(networkFixtures.page.url, unaccessableDir)).rejects.toThrow('EACCES');
+    });
   });
 
-  test('should throw error if there is no access to folder', async () => {
-    const unaccessableDir = '/root';
-    await expect(async () => {
-      await pageLoader(networkFixtures.page.url, unaccessableDir);
-    }).rejects.toThrow(/EACCES/);
-  });
-});
+  describe('network errors', () => {
+    test.each(networkErrorsList)('should throw if there network error: %s', async (errorText, errorCode) => {
+      const seed = new Date().getMilliseconds();
+      nock(networkFixtures.base).get(`${networkFixtures.error.path}/${seed}`).reply(errorCode);
+      await expect(pageLoader(`${networkFixtures.error.url}/${seed}`, tempDirpath)).rejects.toThrow(errorText);
+    });
 
-describe('negative cases: network errors', () => {
-  test.each(networkErrorsList)('should throw if there network error: %s', async (errorText, errorCode) => {
-    nock(networkFixtures.base).get(networkFixtures.error.path).reply(errorCode);
-    const regexp = new RegExp(errorText);
-    await expect(async () => {
-      await pageLoader(networkFixtures.error.url, tempDirpath);
-    }).rejects.toThrow(regexp);
-  });
+    test('should throw if there network error: timeout', async () => {
+      nock(networkFixtures.base)
+        .get(networkFixtures.error.path)
+        .replyWithError({ code: 'ETIMEDOUT' });
 
-  test('should throw if there network error: timeout', async () => {
-    nock(networkFixtures.base)
-      .get(networkFixtures.error.path)
-      .replyWithError({ code: 'ETIMEDOUT' });
-
-    await expect(async () => {
-      await pageLoader(networkFixtures.error.url, tempDirpath);
-    }).rejects.toThrow(/ETIMEDOUT/);
+      await expect(pageLoader(networkFixtures.error.url, tempDirpath)).rejects.toThrow('ETIMEDOUT');
+    });
   });
 });
