@@ -13,11 +13,6 @@ const __dirname = dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 const readFile = (filepath) => fs.readFile(filepath, 'utf-8');
 
-const networkErrorsList = [
-  ['404', 404],
-  ['500', 500],
-];
-
 const networkFixtures = {
   base: 'https://ru.hexlet.io/',
   dir: 'ru-hexlet-io-courses_files',
@@ -32,50 +27,46 @@ const networkFixtures = {
 
 const pageFixture = {
   path: '/courses',
-  origin: getFixturePath('ru-hexlet-io-courses.html'),
-  expected: getFixturePath('/expected/ru-hexlet-io-courses.html'),
+  origin: 'ru-hexlet-io-courses_files/ru-hexlet-io-courses.html',
+  filePath: 'ru-hexlet-io-courses.html',
 };
 
 const assetsFixtures = [
   {
-    fixturePath: '/assets/professions/nodejs.png',
-    name: 'ru-hexlet-io-assets-professions-nodejs.png',
-    expected: getFixturePath('/expected/ru-hexlet-io-courses_files/nodejs.png'),
+    assetPath: '/assets/professions/nodejs.png',
+    filePath: 'ru-hexlet-io-courses_files/ru-hexlet-io-assets-professions-nodejs.png',
   },
   {
-    fixturePath: '/assets/application.css',
-    name: 'ru-hexlet-io-assets-application.css',
-    expected: getFixturePath('/expected/ru-hexlet-io-courses_files/application.css'),
+    assetPath: '/assets/application.css',
+    filePath: 'ru-hexlet-io-courses_files/ru-hexlet-io-assets-application.css',
   },
   {
-    fixturePath: '/courses',
-    name: 'ru-hexlet-io-courses.html',
-    expected: getFixturePath('/expected/ru-hexlet-io-courses_files/ru-hexlet-io-courses.html'),
+    assetPath: '/courses',
+    filePath: 'ru-hexlet-io-courses_files/ru-hexlet-io-courses.html',
   },
   {
-    fixturePath: '/packs/js/runtime.js',
-    name: 'ru-hexlet-io-packs-js-runtime.js',
-    expected: getFixturePath('/expected/ru-hexlet-io-courses_files/runtime.js'),
+    assetPath: '/packs/js/runtime.js',
+    filePath: 'ru-hexlet-io-courses_files/ru-hexlet-io-packs-js-runtime.js',
   },
 ];
 
-let tempDirpath;
+const scope = nock(networkFixtures.base).persist();
 
 beforeAll(async () => {
-  nock(networkFixtures.base)
-    .persist()
+  scope
     .get(pageFixture.path)
-    .replyWithFile(200, pageFixture.origin);
+    .replyWithFile(200, getFixturePath(pageFixture.origin));
 
-  assetsFixtures.forEach(({ fixturePath, expected }) => {
-    nock(networkFixtures.base)
-      .persist()
-      .get(fixturePath)
-      .replyWithFile(200, expected);
+  assetsFixtures.forEach(({ assetPath, filePath }) => {
+    scope
+      .get(assetPath)
+      .replyWithFile(200, getFixturePath(filePath));
   });
 });
 
 describe('positive cases', () => {
+  let tempDirpath;
+
   beforeEach(async () => {
     tempDirpath = await fs.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   });
@@ -84,17 +75,16 @@ describe('positive cases', () => {
     await pageLoader(networkFixtures.page.url, tempDirpath);
 
     const result = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
-    const expected = await readFile(pageFixture.expected);
+    const expected = await readFile(pageFixture.filePath);
 
     expect(result).toBe(expected);
   });
 
-  test.each(assetsFixtures)('should download asset $name', async ({ name, expected }) => {
+  test.each(assetsFixtures)('should download asset $name', async ({ filePath }) => {
     await pageLoader(networkFixtures.page.url, tempDirpath);
 
-    const resultAssetPath = path.join(tempDirpath, networkFixtures.dir, name);
-    const resultAsset = await readFile(resultAssetPath);
-    const expectedAsset = await readFile(expected);
+    const resultAsset = await readFile(path.join(tempDirpath, filePath));
+    const expectedAsset = await readFile(getFixturePath(filePath));
 
     expect(resultAsset).toBe(expectedAsset);
   });
@@ -103,28 +93,33 @@ describe('positive cases', () => {
 describe('negative cases', () => {
   describe('filesystem errors', () => {
     test('should throw error if there is wrong folder', async () => {
-      await expect(pageLoader(networkFixtures.page.url, path.join(tempDirpath, '/wrong-folder'))).rejects.toThrow('ENOENT');
+      await expect(pageLoader(networkFixtures.page.url, '/wrong-folder'))
+        .rejects.toThrow('ENOENT');
     });
 
     test('should throw error if there is no access to folder', async () => {
-      const unaccessableDir = '/var/lib';
-      await expect(pageLoader(networkFixtures.page.url, unaccessableDir)).rejects.toThrow('EACCES');
+      await expect(pageLoader(networkFixtures.page.url, '/var/lib'))
+        .rejects.toThrow('EACCES');
     });
   });
 
   describe('network errors', () => {
-    test.each(networkErrorsList)('should throw if there network error: %s', async (errorText, errorCode) => {
-      const seed = new Date().getMilliseconds();
-      nock(networkFixtures.base).get(`${networkFixtures.error.path}/${seed}`).reply(errorCode);
-      await expect(pageLoader(`${networkFixtures.error.url}/${seed}`, tempDirpath)).rejects.toThrow(errorText);
+    test.each([404, 500])('should throw if there network error: %s', async (errorCode) => {
+      scope
+        .get(`${networkFixtures.error.path}/${errorCode}`)
+        .reply(errorCode);
+
+      await expect(pageLoader(`${networkFixtures.error.url}/${errorCode}`))
+        .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
     test('should throw if there network error: timeout', async () => {
-      nock(networkFixtures.base)
+      scope
         .get(networkFixtures.error.path)
         .replyWithError({ code: 'ETIMEDOUT' });
 
-      await expect(pageLoader(networkFixtures.error.url, tempDirpath)).rejects.toThrow('ETIMEDOUT');
+      await expect(pageLoader(networkFixtures.error.url))
+        .rejects.toThrow('ETIMEDOUT');
     });
   });
 });
