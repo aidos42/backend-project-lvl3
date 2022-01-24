@@ -13,7 +13,7 @@ const __dirname = dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 const readFile = (filepath) => fs.readFile(filepath, 'utf-8');
 
-const networkFixtures = {
+const networkFixture = {
   base: 'https://ru.hexlet.io/',
   dir: 'ru-hexlet-io-courses_files',
   page: {
@@ -23,12 +23,6 @@ const networkFixtures = {
     path: '/error.html',
     url: 'https://ru.hexlet.io/error.html',
   },
-};
-
-const pageFixture = {
-  path: '/courses',
-  origin: 'ru-hexlet-io-courses_files/ru-hexlet-io-courses.html',
-  filePath: 'ru-hexlet-io-courses.html',
 };
 
 const assetsFixtures = [
@@ -50,13 +44,9 @@ const assetsFixtures = [
   },
 ];
 
-const scope = nock(networkFixtures.base).persist();
+const scope = nock(networkFixture.base).persist();
 
 beforeAll(async () => {
-  scope
-    .get(pageFixture.path)
-    .replyWithFile(200, getFixturePath(pageFixture.origin));
-
   assetsFixtures.forEach(({ assetPath, filePath }) => {
     scope
       .get(assetPath)
@@ -72,33 +62,33 @@ describe('positive cases', () => {
   });
 
   test('page content should match expected', async () => {
-    await pageLoader(networkFixtures.page.url, tempDirpath);
+    await pageLoader(networkFixture.page.url, tempDirpath);
 
-    const result = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
-    const expected = await readFile(pageFixture.filePath);
+    const actualPage = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
+    const expectedPage = await readFile(getFixturePath('ru-hexlet-io-courses.html'));
 
-    expect(result).toBe(expected);
+    expect(actualPage).toBe(expectedPage);
   });
 
   test.each(assetsFixtures)('should download asset $name', async ({ filePath }) => {
-    await pageLoader(networkFixtures.page.url, tempDirpath);
+    await pageLoader(networkFixture.page.url, tempDirpath);
 
-    const resultAsset = await readFile(path.join(tempDirpath, filePath));
-    const expectedAsset = await readFile(getFixturePath(filePath));
+    const actualContent = await readFile(path.join(tempDirpath, filePath));
+    const expectedContent = await readFile(getFixturePath(filePath));
 
-    expect(resultAsset).toBe(expectedAsset);
+    expect(actualContent).toBe(expectedContent);
   });
 });
 
 describe('negative cases', () => {
   describe('filesystem errors', () => {
     test('should throw error if there is wrong folder', async () => {
-      await expect(pageLoader(networkFixtures.page.url, '/wrong-folder'))
+      await expect(pageLoader(networkFixture.page.url, '/wrong-folder'))
         .rejects.toThrow('ENOENT');
     });
 
     test('should throw error if there is no access to folder', async () => {
-      await expect(pageLoader(networkFixtures.page.url, '/var/lib'))
+      await expect(pageLoader(networkFixture.page.url, '/var/lib'))
         .rejects.toThrow('EACCES');
     });
   });
@@ -106,19 +96,19 @@ describe('negative cases', () => {
   describe('network errors', () => {
     test.each([404, 500])('should throw if there network error: %s', async (errorCode) => {
       scope
-        .get(`${networkFixtures.error.path}/${errorCode}`)
+        .get(`${networkFixture.error.path}/${errorCode}`)
         .reply(errorCode);
 
-      await expect(pageLoader(`${networkFixtures.error.url}/${errorCode}`))
+      await expect(pageLoader(`${networkFixture.error.url}/${errorCode}`))
         .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
     test('should throw if there network error: timeout', async () => {
       scope
-        .get(networkFixtures.error.path)
+        .get(networkFixture.error.path)
         .replyWithError({ code: 'ETIMEDOUT' });
 
-      await expect(pageLoader(networkFixtures.error.url))
+      await expect(pageLoader(networkFixture.error.url))
         .rejects.toThrow('ETIMEDOUT');
     });
   });
