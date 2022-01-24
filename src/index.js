@@ -5,18 +5,23 @@ import axios from 'axios';
 import 'axios-debug-log';
 import prettier from 'prettier';
 import Listr from 'listr';
-import { buildName, getAssets, replaceAssets } from './utils.js';
+import {
+  buildDirName,
+  buildFileName,
+  getAssets,
+  replaceAssets,
+} from './utils.js';
 import ReadableError from './ReadableError.js';
 
 const log = debug('page-loader');
 
 export default (url, outputDirpath = process.cwd()) => {
-  log('building paths');
+  log(`Page loader is started with url: ${url}, outputDirpath: ${outputDirpath}`);
 
-  const pageName = buildName.file(url);
-  const dirName = buildName.dir(url);
-  const pagepath = path.resolve(path.join(outputDirpath, pageName));
-  const dirpath = path.resolve(path.join(outputDirpath, dirName));
+  const pageName = buildFileName(url);
+  const dirName = buildDirName(url);
+  const pagepath = path.resolve(outputDirpath, pageName);
+  const dirpath = path.resolve(outputDirpath, dirName);
   const { protocol } = new URL(url);
 
   log(`path for page: ${pagepath}`);
@@ -60,7 +65,7 @@ export default (url, outputDirpath = process.cwd()) => {
       const tasks = responses.map((response) => {
         const { data } = response;
         const href = response.config.url;
-        const assetpath = path.resolve(config.dirpath, buildName.file(href));
+        const assetpath = path.resolve(config.dirpath, buildFileName(href));
 
         return {
           title: `write asset ${href}`,

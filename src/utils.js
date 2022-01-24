@@ -2,11 +2,13 @@ import path from 'path';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 
+const slugifyName = (name) => name.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+
 const buildFileName = (url) => {
   const { hostname, pathname } = new URL(url);
   const extension = path.extname(pathname) ? path.extname(pathname) : '.html';
   const crude = path.join(hostname, pathname.replace(extension, ''));
-  const name = crude.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+  const name = slugifyName(crude);
 
   return `${name}${extension}`;
 };
@@ -14,14 +16,9 @@ const buildFileName = (url) => {
 const buildDirName = (url) => {
   const { hostname, pathname } = new URL(url);
   const crude = path.join(hostname, pathname);
-  const name = crude.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+  const name = slugifyName(crude);
 
   return `${name}_files`;
-};
-
-const buildName = {
-  file: buildFileName,
-  dir: buildDirName,
 };
 
 const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
@@ -59,7 +56,7 @@ const getAssets = (html, { url, dirName, protocol }) => {
         return {};
       }
 
-      const newSrc = path.join(dirName, buildName.file(href));
+      const newSrc = path.join(dirName, buildFileName(href));
 
       return {
         oldSrc, newSrc, href, element, attribute,
@@ -84,4 +81,9 @@ const replaceAssets = (html, assets) => {
   return $.root().html();
 };
 
-export { buildName, getAssets, replaceAssets };
+export {
+  buildDirName,
+  buildFileName,
+  getAssets,
+  replaceAssets,
+};
