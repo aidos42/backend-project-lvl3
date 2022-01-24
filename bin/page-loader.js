@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import program from 'commander';
-import pageLoader from '../src/index.js';
+import loadPage from '../src/index.js';
 
 program
   .version('0.0.1')
@@ -8,7 +8,7 @@ program
   .option('-o, --output [dir]', 'output dir')
   .arguments('<url>')
   .action((pagepath, options) => {
-    pageLoader(pagepath, options.output)
+    loadPage(pagepath, options.output)
       .then((response) => console.log(response))
       .catch((error) => {
         console.error(error);

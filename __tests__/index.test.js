@@ -3,7 +3,7 @@ import path, { dirname } from 'path';
 import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 import nock from 'nock';
-import pageLoader from '../src/index.js';
+import loadPage from '../src/index.js';
 
 nock.disableNetConnect();
 
@@ -62,7 +62,7 @@ describe('positive cases', () => {
   });
 
   test('page content should match expected', async () => {
-    await pageLoader(networkFixture.page.url, tempDirpath);
+    await loadPage(networkFixture.page.url, tempDirpath);
 
     const actualPage = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
     const expectedPage = await readFile(getFixturePath('ru-hexlet-io-courses.html'));
@@ -71,7 +71,7 @@ describe('positive cases', () => {
   });
 
   test.each(assetsFixtures)('should download asset $name', async ({ filePath }) => {
-    await pageLoader(networkFixture.page.url, tempDirpath);
+    await loadPage(networkFixture.page.url, tempDirpath);
 
     const actualContent = await readFile(path.join(tempDirpath, filePath));
     const expectedContent = await readFile(getFixturePath(filePath));
@@ -83,12 +83,12 @@ describe('positive cases', () => {
 describe('negative cases', () => {
   describe('filesystem errors', () => {
     test('should throw error if there is wrong folder', async () => {
-      await expect(pageLoader(networkFixture.page.url, '/wrong-folder'))
+      await expect(loadPage(networkFixture.page.url, '/wrong-folder'))
         .rejects.toThrow('ENOENT');
     });
 
     test('should throw error if there is no access to folder', async () => {
-      await expect(pageLoader(networkFixture.page.url, '/var/lib'))
+      await expect(loadPage(networkFixture.page.url, '/var/lib'))
         .rejects.toThrow('EACCES');
     });
   });
@@ -99,7 +99,7 @@ describe('negative cases', () => {
         .get(`${networkFixture.error.path}/${errorCode}`)
         .reply(errorCode);
 
-      await expect(pageLoader(`${networkFixture.error.url}/${errorCode}`))
+      await expect(loadPage(`${networkFixture.error.url}/${errorCode}`))
         .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
@@ -108,7 +108,7 @@ describe('negative cases', () => {
         .get(networkFixture.error.path)
         .replyWithError({ code: 'ETIMEDOUT' });
 
-      await expect(pageLoader(networkFixture.error.url))
+      await expect(loadPage(networkFixture.error.url))
         .rejects.toThrow('ETIMEDOUT');
     });
   });
