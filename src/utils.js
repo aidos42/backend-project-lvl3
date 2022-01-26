@@ -2,23 +2,26 @@ import path from 'path';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 
-const slugifyName = (name) => name.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+const slugifyName = ({ hostname, pathname }) => {
+  const name = path.join(hostname, pathname);
+  return name.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
+};
 
 const buildFileName = (url) => {
-  const { hostname, pathname } = new URL(url);
-  const extension = path.extname(pathname) ? path.extname(pathname) : '.html';
-  const crude = path.join(hostname, pathname.replace(extension, ''));
-  const name = slugifyName(crude);
+  const { pathname, origin } = new URL(url);
+  const { name, dir, ext } = path.parse(pathname);
+  const normalizedUrl = slugifyName(new URL(path.join(dir, name), origin));
+  const normalizedExt = ext || '.html';
 
-  return `${name}${extension}`;
+  return `${normalizedUrl}${normalizedExt}`;
 };
 
 const buildDirName = (url) => {
-  const { hostname, pathname } = new URL(url);
-  const crude = path.join(hostname, pathname);
-  const name = slugifyName(crude);
+  const { pathname, origin } = new URL(url);
+  const { name, dir } = path.parse(pathname);
+  const normalizedName = slugifyName(new URL(path.join(dir, name), origin));
 
-  return `${name}_files`;
+  return `${normalizedName}_files`;
 };
 
 const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);

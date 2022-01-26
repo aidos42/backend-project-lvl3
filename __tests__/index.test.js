@@ -19,10 +19,6 @@ const networkFixture = {
   page: {
     url: 'https://ru.hexlet.io/courses',
   },
-  error: {
-    path: '/error.html',
-    url: 'https://ru.hexlet.io/error.html',
-  },
 };
 
 const assetsFixtures = [
@@ -95,20 +91,22 @@ describe('negative cases', () => {
 
   describe('network errors', () => {
     test.each([404, 500])('should throw if there network error: %s', async (errorCode) => {
+      const errorUrl = new URL(errorCode, networkFixture.base).href;
       scope
-        .get(`${networkFixture.error.path}/${errorCode}`)
+        .get(`/${errorCode}`)
         .reply(errorCode);
 
-      await expect(loadPage(`${networkFixture.error.url}/${errorCode}`))
+      await expect(loadPage(errorUrl))
         .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
     test('should throw if there network error: timeout', async () => {
+      const errorUrl = new URL('ETIMEDOUT', networkFixture.base).href;
       scope
-        .get(networkFixture.error.path)
+        .get('/ETIMEDOUT')
         .replyWithError({ code: 'ETIMEDOUT' });
 
-      await expect(loadPage(networkFixture.error.url))
+      await expect(loadPage(errorUrl))
         .rejects.toThrow('ETIMEDOUT');
     });
   });
