@@ -13,13 +13,7 @@ const __dirname = dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 const readFile = (filepath) => fs.readFile(filepath, 'utf-8');
 
-const networkFixture = {
-  base: 'https://ru.hexlet.io/',
-  dir: 'ru-hexlet-io-courses_files',
-  page: {
-    url: 'https://ru.hexlet.io/courses',
-  },
-};
+const pageUrl = new URL('/courses', 'https://ru.hexlet.io/');
 
 const assetsFixtures = [
   {
@@ -40,7 +34,7 @@ const assetsFixtures = [
   },
 ];
 
-const scope = nock(networkFixture.base).persist();
+const scope = nock(pageUrl.origin).persist();
 
 beforeAll(async () => {
   assetsFixtures.forEach(({ assetPath, filePath }) => {
@@ -58,7 +52,7 @@ describe('positive cases', () => {
   });
 
   test('page content should match expected', async () => {
-    await loadPage(networkFixture.page.url, tempDirpath);
+    await loadPage(pageUrl.toString(), tempDirpath);
 
     const actualPage = await readFile(path.join(tempDirpath, 'ru-hexlet-io-courses.html'));
     const expectedPage = await readFile(getFixturePath('ru-hexlet-io-courses.html'));
@@ -67,7 +61,7 @@ describe('positive cases', () => {
   });
 
   test.each(assetsFixtures)('should download asset $name', async ({ filePath }) => {
-    await loadPage(networkFixture.page.url, tempDirpath);
+    await loadPage(pageUrl.toString(), tempDirpath);
 
     const actualContent = await readFile(path.join(tempDirpath, filePath));
     const expectedContent = await readFile(getFixturePath(filePath));
@@ -79,19 +73,20 @@ describe('positive cases', () => {
 describe('negative cases', () => {
   describe('filesystem errors', () => {
     test('should throw error if there is wrong folder', async () => {
-      await expect(loadPage(networkFixture.page.url, '/wrong-folder'))
+      await expect(loadPage(pageUrl.toString(), '/wrong-folder'))
         .rejects.toThrow('ENOENT');
     });
 
     test('should throw error if there is no access to folder', async () => {
-      await expect(loadPage(networkFixture.page.url, '/var/lib'))
+      await expect(loadPage(pageUrl.toString(), '/var/lib'))
         .rejects.toThrow('EACCES');
     });
   });
 
   describe('network errors', () => {
     test.each([404, 500])('should throw if there network error: %s', async (errorCode) => {
-      const errorUrl = new URL(errorCode, networkFixture.base).href;
+      const errorUrl = new URL(errorCode, pageUrl.origin).href;
+
       scope
         .get(`/${errorCode}`)
         .reply(errorCode);
@@ -101,13 +96,15 @@ describe('negative cases', () => {
     });
 
     test('should throw if there network error: timeout', async () => {
-      const errorUrl = new URL('ETIMEDOUT', networkFixture.base).href;
-      scope
-        .get('/ETIMEDOUT')
-        .replyWithError({ code: 'ETIMEDOUT' });
+      const errorUrl = new URL('ETIMEDOUT', pageUrl.origin);
+      const timeoutError = { code: 'ETIMEDOUT' };
 
-      await expect(loadPage(errorUrl))
-        .rejects.toThrow('ETIMEDOUT');
+      scope
+        .get(errorUrl.pathname)
+        .replyWithError(timeoutError);
+
+      await expect(loadPage(errorUrl.toString()))
+        .rejects.toThrow(timeoutError.code);
     });
   });
 });
