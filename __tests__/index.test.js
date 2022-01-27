@@ -85,13 +85,13 @@ describe('negative cases', () => {
 
   describe('network errors', () => {
     test.each([404, 500])('should throw if there network error: %s', async (errorCode) => {
-      const errorUrl = new URL(errorCode, pageUrl.origin).href;
+      const errorUrl = new URL(errorCode, pageUrl.origin);
 
       scope
         .get(`/${errorCode}`)
         .reply(errorCode);
 
-      await expect(loadPage(errorUrl))
+      await expect(loadPage(errorUrl.toString()))
         .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
