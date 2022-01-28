@@ -88,7 +88,7 @@ describe('negative cases', () => {
       const errorUrl = new URL(errorCode, pageUrl.origin);
 
       scope
-        .get(`/${errorCode}`)
+        .get(errorUrl.pathname)
         .reply(errorCode);
 
       await expect(loadPage(errorUrl.toString()))
