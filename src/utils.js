@@ -1,27 +1,33 @@
 import path from 'path';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
+import debug from 'debug';
 
-const slugifyName = ({ hostname, pathname }) => {
-  const name = path.join(hostname, pathname);
-  return name.replace(/[^a-zA-Z0-9]/g, ' ').replace(/\s/g, '-');
-};
+const log = debug('page-loader');
 
-const buildFileName = (url) => {
-  const { pathname, origin } = new URL(url);
-  const { name, dir, ext } = path.parse(pathname);
-  const normalizedUrl = slugifyName(new URL(path.join(dir, name), origin));
-  const normalizedExt = ext || '.html';
-
-  return `${normalizedUrl}${normalizedExt}`;
-};
-
-const buildDirName = (url) => {
-  const { pathname, origin } = new URL(url);
+const slugifyUrl = (url) => {
+  const { pathname, origin } = url;
   const { name, dir } = path.parse(pathname);
-  const normalizedName = slugifyName(new URL(path.join(dir, name), origin));
+  const urlWithoutExt = new URL(path.join(dir, name), origin);
+  const nameWithoutExt = path.join(urlWithoutExt.hostname, urlWithoutExt.pathname);
 
-  return `${normalizedName}_files`;
+  return nameWithoutExt.replace(/[^\w]/g, ' ').replace(/\s/g, '-');
+};
+
+const slugifyFileName = (url) => {
+  const customUrl = new URL(url);
+  const normalizedUrl = slugifyUrl(customUrl);
+  const { ext } = path.parse(customUrl.pathname);
+  const fileExtension = ext || '.html';
+
+  return `${normalizedUrl}${fileExtension}`;
+};
+
+const slugifyDirName = (url) => {
+  const customUrl = new URL(url);
+  const normalizedUrl = slugifyUrl(customUrl);
+
+  return `${normalizedUrl}_files`;
 };
 
 const hasScheme = (url) => new RegExp('^([a-z]+://|//)', 'i').test(url);
@@ -43,8 +49,8 @@ const isSameOrigin = (url1, url2) => {
   return hostname1 === hostname2;
 };
 
-const getAssets = (html, { url, dirName, protocol }) => {
-  const { hostname, pathname } = new URL(url);
+const getAssets = (html, { url, dirName }) => {
+  const { hostname, pathname, protocol } = new URL(url);
   const $ = cheerio.load(html);
   const elements = ['img', 'link', 'script'];
   const attributes = ['src', 'href'];
@@ -59,7 +65,9 @@ const getAssets = (html, { url, dirName, protocol }) => {
         return {};
       }
 
-      const newSrc = path.join(dirName, buildFileName(href));
+      const newSrc = path.join(dirName, slugifyFileName(href));
+
+      log(`downloading asset: ${href}`);
 
       return {
         oldSrc, newSrc, href, element, attribute,
@@ -69,7 +77,7 @@ const getAssets = (html, { url, dirName, protocol }) => {
     return assetData;
   });
 
-  return assets.flat();
+  return assets.flat().filter((asset) => Object.keys(asset).length !== 0);
 };
 
 const replaceAssets = (html, assets) => {
@@ -78,6 +86,9 @@ const replaceAssets = (html, assets) => {
     oldSrc, newSrc, element, attribute,
   }) => {
     const selector = `${element}[${attribute}=${oldSrc}]`;
+
+    log(`replacing asset ${oldSrc} by ${newSrc}`);
+
     $(selector).attr(attribute, newSrc);
   });
 
@@ -85,8 +96,8 @@ const replaceAssets = (html, assets) => {
 };
 
 export {
-  buildDirName,
-  buildFileName,
+  slugifyDirName,
+  slugifyFileName,
   getAssets,
   replaceAssets,
 };
