@@ -30,7 +30,7 @@ export default (url, outputDirpath = process.cwd()) => {
     .then((response) => getAssets(response.data, customUrl, dirName, dirpath))
     .then(({ html, assets }) => {
       log(`path for page: ${pagepath}`);
-      return fs.writeFile(pagepath, html, 'utf-8').then(() => assets);
+      return createFile(pagepath, html).then(() => assets);
     })
     .then((assets) => {
       const tasks = assets.map(({ href, assetpath }) => ({
