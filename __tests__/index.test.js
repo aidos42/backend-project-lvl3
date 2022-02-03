@@ -96,7 +96,7 @@ describe('negative cases', () => {
     });
 
     // TODO: поменять тесты под отсутствие readable error
-    test.skip('should throw if there network error: timeout', async () => {
+    test('should throw if there network error: timeout', async () => {
       const errorUrl = new URL('ETIMEDOUT', pageUrl.origin);
       const timeoutError = { code: 'ETIMEDOUT' };
 
