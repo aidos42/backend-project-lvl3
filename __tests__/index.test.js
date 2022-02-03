@@ -71,7 +71,7 @@ describe('positive cases', () => {
 });
 
 describe('negative cases', () => {
-  describe.skip('filesystem errors', () => {
+  describe('filesystem errors', () => {
     test('should throw error if there is wrong folder', async () => {
       await expect(loadPage(pageUrl.toString(), '/wrong-folder'))
         .rejects.toThrow('ENOENT');

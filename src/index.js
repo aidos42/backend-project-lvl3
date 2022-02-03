@@ -22,20 +22,17 @@ export default (url, outputDirpath = process.cwd()) => {
   const pagepath = path.resolve(outputDirpath, pageName);
   const dirpath = path.resolve(outputDirpath, dirName);
 
-  log(`path for page: ${pagepath}`);
-  log(`path for assets dir ${dirpath}`);
-
   return axios.get(customUrl.toString())
+    .then((response) => {
+      log(`path for assets dir ${dirpath}`);
+      return fs.mkdir(dirpath).then(() => response);
+    })
     .then((response) => getAssets(response.data, customUrl, dirName, dirpath))
     .then(({ html, assets }) => {
-      const writeFile = fs.writeFile(pagepath, html, 'utf-8');
-      const makeDir = fs.mkdir(dirpath);
-
-      const promises = Promise.all([writeFile, makeDir]);
-
-      return { assets, promises };
+      log(`path for page: ${pagepath}`);
+      return fs.writeFile(pagepath, html, 'utf-8').then(() => assets);
     })
-    .then(({ assets }) => {
+    .then((assets) => {
       const tasks = assets.map(({ href, assetpath }) => ({
         title: `download asset ${href}`,
         task: () => axios
