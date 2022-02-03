@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs/promises';
 import * as cheerio from 'cheerio';
 import _ from 'lodash';
 import debug from 'debug';
@@ -6,26 +7,24 @@ import debug from 'debug';
 const log = debug('page-loader');
 
 const slugifyUrl = (url) => {
-  const { pathname, origin } = url;
-  const { name, dir } = path.parse(pathname);
-  const urlWithoutExt = new URL(path.join(dir, name), origin);
-  const nameWithoutExt = path.join(urlWithoutExt.hostname, urlWithoutExt.pathname);
+  const { pathname, hostname } = url;
+  const name = path.join(hostname, pathname);
 
-  return nameWithoutExt.replace(/[^\w]/g, ' ').replace(/\s/g, '-');
+  return name.replace(/[^\w]/g, '-');
 };
 
 const slugifyFileName = (url) => {
-  const customUrl = new URL(url);
-  const normalizedUrl = slugifyUrl(customUrl);
-  const { ext } = path.parse(customUrl.pathname);
+  const { pathname, origin } = url;
+  const { ext, dir, name } = path.parse(pathname);
+  const urlWithoutExt = new URL(path.join(dir, name), origin);
+  const normalizedUrl = slugifyUrl(urlWithoutExt);
   const fileExtension = ext || '.html';
 
   return `${normalizedUrl}${fileExtension}`;
 };
 
 const slugifyDirName = (url) => {
-  const customUrl = new URL(url);
-  const normalizedUrl = slugifyUrl(customUrl);
+  const normalizedUrl = slugifyUrl(url);
 
   return `${normalizedUrl}_files`;
 };
@@ -49,39 +48,39 @@ const isSameOrigin = (url1, url2) => {
   return hostname1 === hostname2;
 };
 
-const getAssets = (html, { url, dirName }) => {
-  const { hostname, pathname, protocol } = new URL(url);
-  const $ = cheerio.load(html);
+const getAssets = (data, url, dirName, dirpath) => {
+  const { hostname, pathname, protocol } = url;
+  const $ = cheerio.load(data);
   const elements = ['img', 'link', 'script'];
   const attributes = ['src', 'href'];
-  const assets = elements.map((element) => {
-    const assetData = $(element).toArray().map((item) => {
-      const attribute = attributes.find((value) => _.has(item.attribs, value));
-      const oldSrc = item.attribs[attribute];
-      const origin = path.join(hostname, pathname);
-      const { href } = buildFullSrc(oldSrc, origin, protocol);
+  const assets = elements
+    .map((element) => {
+      const assetData = $(element).toArray().map((item) => {
+        const attribute = attributes.find((value) => _.has(item.attribs, value));
+        const oldSrc = item.attribs[attribute];
+        const origin = path.join(hostname, pathname);
+        const { href } = buildFullSrc(oldSrc, origin, protocol);
 
-      if (!isSameOrigin(url, href)) {
-        return {};
-      }
+        if (!isSameOrigin(url, href)) {
+          return {};
+        }
 
-      const newSrc = path.join(dirName, slugifyFileName(href));
+        const newSrc = path.join(dirName, slugifyFileName(new URL(href)));
 
-      log(`downloading asset: ${href}`);
+        log(`downloading asset: ${href}`);
 
-      return {
-        oldSrc, newSrc, href, element, attribute,
-      };
-    });
+        const assetpath = path.resolve(dirpath, slugifyFileName(new URL(href)));
 
-    return assetData;
-  });
+        return {
+          oldSrc, newSrc, href, element, attribute, assetpath,
+        };
+      });
 
-  return assets.flat().filter((asset) => Object.keys(asset).length !== 0);
-};
+      return assetData;
+    })
+    .flat()
+    .filter((asset) => Object.keys(asset).length !== 0);
 
-const replaceAssets = (html, assets) => {
-  const $ = cheerio.load(html);
   assets.forEach(({
     oldSrc, newSrc, element, attribute,
   }) => {
@@ -92,12 +91,16 @@ const replaceAssets = (html, assets) => {
     $(selector).attr(attribute, newSrc);
   });
 
-  return $.root().html();
+  const html = $.root().html();
+
+  return { html, assets };
 };
+
+const createFile = (filepath, content) => fs.writeFile(filepath, content, { encoding: 'utf-8' });
 
 export {
   slugifyDirName,
   slugifyFileName,
   getAssets,
-  replaceAssets,
+  createFile,
 };

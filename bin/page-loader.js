@@ -11,7 +11,7 @@ program
     loadPage(pagepath, options.output)
       .then((response) => console.log(response))
       .catch((error) => {
-        console.error(error);
+        console.error(error.message);
         process.exit(1);
       });
   })
