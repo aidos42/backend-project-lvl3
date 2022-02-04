@@ -95,14 +95,13 @@ describe('negative cases', () => {
         .rejects.toThrow(`Request failed with status code ${errorCode}`);
     });
 
-    // TODO: поменять тесты под отсутствие readable error
     test('should throw if there network error: timeout', async () => {
       const errorUrl = new URL('ETIMEDOUT', pageUrl.origin);
       const timeoutError = { code: 'ETIMEDOUT' };
 
       scope
         .get(errorUrl.pathname)
-        .replyWithError(timeoutError);
+        .replyWithError(new Error(timeoutError.code));
 
       await expect(loadPage(errorUrl.toString()))
         .rejects.toThrow(timeoutError.code);
