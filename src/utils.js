@@ -39,7 +39,6 @@ const extractAssets = (data, url, dirName) => {
   const { origin } = url;
   const $ = cheerio.load(data);
   const assets = Object.keys(elements)
-  // TODO: разбить map на три части: собрать адреса, отфильтровать, подготовить объекты
     .map((element) => {
       const assetData = $(element).toArray().map((item) => {
         const attribute = elements[item.tagName];
@@ -50,31 +49,29 @@ const extractAssets = (data, url, dirName) => {
           return {};
         }
 
-        const newSrc = path.join(dirName, slugifyFileName(assetUrl));
-
-        log(`downloading asset: ${assetUrl.toString()}`);
-
         return {
-          oldSrc: assetSrc, newSrc, href: assetUrl.toString(), element, attribute,
+          oldSrc: assetSrc, href: assetUrl, element, attribute,
         };
       });
 
       return assetData;
     })
-    // TODO: Узнать, где появляются массивы вместо объектов
     .flat()
-    .filter((asset) => Object.keys(asset).length !== 0);
+    .filter((asset) => Object.keys(asset).length !== 0)
+    .map((item) => {
+      const {
+        oldSrc, element, attribute, href,
+      } = item;
 
-  // перенести это в третий шаг предыдущего, передавать внутри пайплайна объект (element) целиком
-  assets.forEach(({
-    oldSrc, newSrc, element, attribute,
-  }) => {
-    const selector = `${element}[${attribute}=${oldSrc}]`;
+      const newSrc = path.join(dirName, slugifyFileName(href));
+      const selector = `${element}[${attribute}=${oldSrc}]`;
 
-    log(`replacing asset ${oldSrc} by ${newSrc}`);
+      log(`replacing asset ${oldSrc} by ${newSrc}`);
 
-    $(selector).attr(attribute, newSrc);
-  });
+      $(selector).attr(attribute, newSrc);
+
+      return item;
+    });
 
   const html = $.root().html();
 

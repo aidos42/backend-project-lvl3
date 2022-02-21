@@ -39,11 +39,11 @@ export default (url, outputDirPath = process.cwd()) => {
     })
     .then((assets) => {
       const tasks = assets.map(({ href }) => {
-        const assetPath = path.resolve(dirPath, slugifyFileName(new URL(href)));
+        const assetPath = path.resolve(dirPath, slugifyFileName(href));
 
         return {
-          title: `download asset ${href}`,
-          task: () => getAsset(href, assetPath),
+          title: `download asset ${href.toString()}`,
+          task: () => getAsset(href.toString(), assetPath),
         };
       });
 
