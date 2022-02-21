@@ -7,40 +7,47 @@ import Listr from 'listr';
 import {
   slugifyDirName,
   slugifyFileName,
-  getAssets,
-  createFile,
+  extractAssets,
+  writeFile,
+  getAsset,
 } from './utils.js';
 
 const log = debug('page-loader');
 
-export default (url, outputDirpath = process.cwd()) => {
-  log(`Page loader is started with url: ${url}, outputDirpath: ${outputDirpath}`);
+export default (url, outputDirPath = process.cwd()) => {
+  log(`Page loader is started with url: ${url}, outputDirpath: ${outputDirPath}`);
 
-  const customUrl = new URL(url);
-  const pageName = slugifyFileName(customUrl);
-  const dirName = slugifyDirName(customUrl);
-  const pagepath = path.resolve(outputDirpath, pageName);
-  const dirpath = path.resolve(outputDirpath, dirName);
+  const pageUrl = new URL(url);
+  const pageName = slugifyFileName(pageUrl);
+  const dirName = slugifyDirName(pageUrl);
+  const pagePath = path.join(outputDirPath, pageName);
+  const dirPath = path.join(outputDirPath, dirName);
 
-  return axios.get(customUrl.toString())
+  return axios.get(url)
     .then((response) => {
-      log(`path for assets dir ${dirpath}`);
-      return fs.mkdir(dirpath).then(() => response);
+      log(`path for assets dir ${dirPath}`);
+
+      return fs.access(dirPath)
+        .catch(() => fs.mkdir(dirPath))
+        .then(() => response);
     })
-    .then((response) => getAssets(response.data, customUrl, dirName, dirpath))
+    .then((response) => extractAssets(response.data, pageUrl, dirName))
     .then(({ html, assets }) => {
-      log(`path for page: ${pagepath}`);
-      return createFile(pagepath, html).then(() => assets);
+      log(`path for page: ${pagePath}`);
+
+      return writeFile(pagePath, html).then(() => assets);
     })
     .then((assets) => {
-      const tasks = assets.map(({ href, assetpath }) => ({
-        title: `download asset ${href}`,
-        task: () => axios
-          .get(href, { responseType: 'arraybuffer' })
-          .then((response) => createFile(assetpath, response.data)),
-      }));
+      const tasks = assets.map(({ href }) => {
+        const assetPath = path.resolve(dirPath, slugifyFileName(new URL(href)));
+
+        return {
+          title: `download asset ${href}`,
+          task: () => getAsset(href, assetPath),
+        };
+      });
 
       return new Listr(tasks, { concurrent: true }).run();
     })
-    .then(() => pagepath);
+    .then(() => pagePath);
 };
