@@ -45,25 +45,21 @@ const extractAssets = (data, url, dirName) => {
         const assetSrc = item.attribs[attribute];
         const assetUrl = new URL(assetSrc, origin);
 
-        if (url.origin !== assetUrl.origin) {
-          return {};
-        }
-
         return {
-          oldSrc: assetSrc, href: assetUrl, element, attribute,
+          oldSrc: assetSrc, assetUrl, element, attribute,
         };
       });
 
       return assetData;
     })
     .flat()
-    .filter((asset) => Object.keys(asset).length !== 0)
+    .filter(({ assetUrl }) => url.origin === assetUrl.origin)
     .map((item) => {
       const {
-        oldSrc, element, attribute, href,
+        oldSrc, element, attribute, assetUrl,
       } = item;
 
-      const newSrc = path.join(dirName, slugifyFileName(href));
+      const newSrc = path.join(dirName, slugifyFileName(assetUrl));
       const selector = `${element}[${attribute}=${oldSrc}]`;
 
       log(`replacing asset ${oldSrc} by ${newSrc}`);
@@ -80,7 +76,7 @@ const extractAssets = (data, url, dirName) => {
 
 const writeFile = (filePath, content) => fs.writeFile(filePath, content, { encoding: 'utf-8' });
 
-const getAsset = (href, assetPath) => axios.get(href, { responseType: 'arraybuffer' }).then((response) => writeFile(assetPath, response.data));
+const getAsset = (assetUrl, assetPath) => axios.get(assetUrl, { responseType: 'arraybuffer' }).then((response) => writeFile(assetPath, response.data));
 
 export {
   slugifyDirName,

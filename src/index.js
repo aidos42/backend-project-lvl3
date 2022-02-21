@@ -38,12 +38,12 @@ export default (url, outputDirPath = process.cwd()) => {
       return writeFile(pagePath, html).then(() => assets);
     })
     .then((assets) => {
-      const tasks = assets.map(({ href }) => {
-        const assetPath = path.resolve(dirPath, slugifyFileName(href));
+      const tasks = assets.map(({ assetUrl }) => {
+        const assetPath = path.resolve(dirPath, slugifyFileName(assetUrl));
 
         return {
-          title: `download asset ${href.toString()}`,
-          task: () => getAsset(href.toString(), assetPath),
+          title: `download asset ${assetUrl.toString()}`,
+          task: () => getAsset(assetUrl.toString(), assetPath),
         };
       });
 
