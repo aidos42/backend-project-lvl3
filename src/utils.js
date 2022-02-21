@@ -39,7 +39,7 @@ const extractAssets = (data, url, dirName) => {
   const { origin } = url;
   const $ = cheerio.load(data);
   const assets = Object.keys(elements)
-    .map((element) => {
+    .flatMap((element) => {
       const assetData = $(element).toArray().map((item) => {
         const attribute = elements[item.tagName];
         const assetSrc = item.attribs[attribute];
@@ -52,7 +52,6 @@ const extractAssets = (data, url, dirName) => {
 
       return assetData;
     })
-    .flat()
     .filter(({ assetUrl }) => url.origin === assetUrl.origin)
     .map((item) => {
       const {
