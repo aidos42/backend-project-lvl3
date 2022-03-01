@@ -39,26 +39,26 @@ const extractAssets = (data, url, dirName) => {
     .flatMap(([tagName, attribute]) => {
       const assetData = $(tagName)
         .toArray()
-        .map((item) => {
-          const assetSrc = item.attribs[attribute];
-          const assetUrl = new URL(assetSrc, origin);
-          const assetName = slugifyFileName(assetUrl);
-          const assetNode = $(item);
+        .map((element) => {
+          const $element = $(element);
+          const src = $element.attr(attribute);
+          const pageUrl = new URL(src, origin);
+          const name = slugifyFileName(pageUrl);
 
           return {
-            assetNode, assetUrl, attribute, assetName,
+            $element, pageUrl, attribute, name,
           };
         });
 
       return assetData;
     })
-    .filter(({ assetUrl }) => assetUrl.origin === origin)
+    .filter(({ pageUrl }) => pageUrl.origin === origin)
     .map(({
-      assetNode, assetUrl, attribute, assetName,
+      $element, pageUrl, attribute, name,
     }) => {
-      assetNode.attr(attribute, path.join(dirName, assetName));
+      $element.attr(attribute, path.join(dirName, name));
 
-      return { assetUrl, assetName };
+      return { pageUrl, name };
     });
 
   const html = $.root().html();
@@ -68,8 +68,8 @@ const extractAssets = (data, url, dirName) => {
 
 const writeFile = (filePath, content) => fs.writeFile(filePath, content, { encoding: 'utf-8' });
 
-const downloadAsset = (assetUrl, assetPath) => axios
-  .get(assetUrl, { responseType: 'arraybuffer' })
+const downloadAsset = (pageUrl, assetPath) => axios
+  .get(pageUrl, { responseType: 'arraybuffer' })
   .then((response) => writeFile(assetPath, response.data));
 
 export {
