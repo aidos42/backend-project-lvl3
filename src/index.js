@@ -9,7 +9,7 @@ import {
   slugifyFileName,
   extractAssets,
   writeFile,
-  getAsset,
+  downloadAsset,
 } from './utils.js';
 
 const log = debug('page-loader');
@@ -39,12 +39,12 @@ export default (url, outputDirPath = process.cwd()) => {
         .then(() => assets);
     })
     .then((assets) => {
-      const tasks = assets.map(({ assetUrl }) => {
-        const assetPath = path.resolve(dirPath, slugifyFileName(assetUrl));
+      const tasks = assets.map(({ assetUrl, assetName }) => {
+        const assetPath = path.resolve(dirPath, assetName);
 
         return {
           title: `download asset ${assetUrl.toString()}`,
-          task: () => getAsset(assetUrl.toString(), assetPath),
+          task: () => downloadAsset(assetUrl.toString(), assetPath),
         };
       });
 

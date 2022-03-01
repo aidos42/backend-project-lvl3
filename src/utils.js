@@ -38,17 +38,17 @@ const slugifyDirName = (url) => {
 const extractAssets = (data, url, dirName) => {
   const { origin } = url;
   const $ = cheerio.load(data);
-  const assets = Object.keys(tagsAttributes)
-    .flatMap((element) => {
+  const assets = Object.entries(tagsAttributes)
+    .flatMap(([element, attribute]) => {
       const assetData = $(element)
         .toArray()
         .map((item) => {
-          const attribute = tagsAttributes[item.tagName];
           const assetSrc = item.attribs[attribute];
           const assetUrl = new URL(assetSrc, origin);
+          const assetName = slugifyFileName(assetUrl);
 
           return {
-            oldSrc: assetSrc, assetUrl, element, attribute,
+            assetSrc, assetUrl, element, attribute, assetName,
           };
         });
 
@@ -57,13 +57,13 @@ const extractAssets = (data, url, dirName) => {
     .filter(({ assetUrl }) => assetUrl.origin === origin)
     .map((item) => {
       const {
-        oldSrc, element, attribute, assetUrl,
+        assetSrc, element, attribute, assetName,
       } = item;
 
-      const newSrc = path.join(dirName, slugifyFileName(assetUrl));
-      const selector = `${element}[${attribute}=${oldSrc}]`;
+      const newSrc = path.join(dirName, assetName);
+      const selector = `${element}[${attribute}=${assetSrc}]`;
 
-      log(`replacing asset ${oldSrc} by ${newSrc}`);
+      log(`replacing asset ${assetSrc} by ${newSrc}`);
 
       $(selector).attr(attribute, newSrc);
 
@@ -77,7 +77,7 @@ const extractAssets = (data, url, dirName) => {
 
 const writeFile = (filePath, content) => fs.writeFile(filePath, content, { encoding: 'utf-8' });
 
-const getAsset = (assetUrl, assetPath) => axios
+const downloadAsset = (assetUrl, assetPath) => axios
   .get(assetUrl, { responseType: 'arraybuffer' })
   .then((response) => writeFile(assetPath, response.data));
 
@@ -86,5 +86,5 @@ export {
   slugifyFileName,
   extractAssets,
   writeFile,
-  getAsset,
+  downloadAsset,
 };
