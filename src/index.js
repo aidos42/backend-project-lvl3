@@ -24,18 +24,19 @@ export default (url, outputDirPath = process.cwd()) => {
   const dirPath = path.join(outputDirPath, dirName);
 
   return axios.get(url)
-    .then((response) => {
+    .then(({ data: html }) => {
       log(`path for assets dir ${dirPath}`);
 
       return fs.access(dirPath)
         .catch(() => fs.mkdir(dirPath))
-        .then(() => response);
+        .then(() => html);
     })
-    .then((response) => extractAssets(response.data, pageUrl, dirName))
+    .then((html) => extractAssets(html, pageUrl, dirName))
     .then(({ html, assets }) => {
       log(`path for page: ${pagePath}`);
 
-      return writeFile(pagePath, html).then(() => assets);
+      return writeFile(pagePath, html)
+        .then(() => assets);
     })
     .then((assets) => {
       const tasks = assets.map(({ assetUrl }) => {

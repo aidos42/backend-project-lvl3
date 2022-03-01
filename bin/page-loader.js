@@ -9,9 +9,9 @@ program
   .arguments('<url>')
   .action((pagepath, options) => {
     loadPage(pagepath, options.output)
-      .then((response) => console.log(response))
-      .catch((error) => {
-        console.error(error.message);
+      .then((pagePath) => console.log(pagePath))
+      .catch(({ message }) => {
+        console.error(message);
         process.exit(1);
       });
   })

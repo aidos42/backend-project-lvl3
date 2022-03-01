@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const log = debug('page-loader');
 
-const elements = {
+const tagsAttributes = {
   img: 'src',
   link: 'href',
   script: 'src',
@@ -38,21 +38,23 @@ const slugifyDirName = (url) => {
 const extractAssets = (data, url, dirName) => {
   const { origin } = url;
   const $ = cheerio.load(data);
-  const assets = Object.keys(elements)
+  const assets = Object.keys(tagsAttributes)
     .flatMap((element) => {
-      const assetData = $(element).toArray().map((item) => {
-        const attribute = elements[item.tagName];
-        const assetSrc = item.attribs[attribute];
-        const assetUrl = new URL(assetSrc, origin);
+      const assetData = $(element)
+        .toArray()
+        .map((item) => {
+          const attribute = tagsAttributes[item.tagName];
+          const assetSrc = item.attribs[attribute];
+          const assetUrl = new URL(assetSrc, origin);
 
-        return {
-          oldSrc: assetSrc, assetUrl, element, attribute,
-        };
-      });
+          return {
+            oldSrc: assetSrc, assetUrl, element, attribute,
+          };
+        });
 
       return assetData;
     })
-    .filter(({ assetUrl }) => url.origin === assetUrl.origin)
+    .filter(({ assetUrl }) => assetUrl.origin === origin)
     .map((item) => {
       const {
         oldSrc, element, attribute, assetUrl,
@@ -75,7 +77,9 @@ const extractAssets = (data, url, dirName) => {
 
 const writeFile = (filePath, content) => fs.writeFile(filePath, content, { encoding: 'utf-8' });
 
-const getAsset = (assetUrl, assetPath) => axios.get(assetUrl, { responseType: 'arraybuffer' }).then((response) => writeFile(assetPath, response.data));
+const getAsset = (assetUrl, assetPath) => axios
+  .get(assetUrl, { responseType: 'arraybuffer' })
+  .then((response) => writeFile(assetPath, response.data));
 
 export {
   slugifyDirName,
