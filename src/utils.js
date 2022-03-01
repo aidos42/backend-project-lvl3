@@ -1,10 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
 import * as cheerio from 'cheerio';
-import debug from 'debug';
 import axios from 'axios';
-
-const log = debug('page-loader');
 
 const tagsAttributes = {
   img: 'src',
@@ -39,35 +36,29 @@ const extractAssets = (data, url, dirName) => {
   const { origin } = url;
   const $ = cheerio.load(data);
   const assets = Object.entries(tagsAttributes)
-    .flatMap(([element, attribute]) => {
-      const assetData = $(element)
+    .flatMap(([tagName, attribute]) => {
+      const assetData = $(tagName)
         .toArray()
         .map((item) => {
           const assetSrc = item.attribs[attribute];
           const assetUrl = new URL(assetSrc, origin);
           const assetName = slugifyFileName(assetUrl);
+          const assetNode = $(item);
 
           return {
-            assetSrc, assetUrl, element, attribute, assetName,
+            assetNode, assetUrl, attribute, assetName,
           };
         });
 
       return assetData;
     })
     .filter(({ assetUrl }) => assetUrl.origin === origin)
-    .map((item) => {
-      const {
-        assetSrc, element, attribute, assetName,
-      } = item;
+    .map(({
+      assetNode, assetUrl, attribute, assetName,
+    }) => {
+      assetNode.attr(attribute, path.join(dirName, assetName));
 
-      const newSrc = path.join(dirName, assetName);
-      const selector = `${element}[${attribute}=${assetSrc}]`;
-
-      log(`replacing asset ${assetSrc} by ${newSrc}`);
-
-      $(selector).attr(attribute, newSrc);
-
-      return item;
+      return { assetUrl, assetName };
     });
 
   const html = $.root().html();
