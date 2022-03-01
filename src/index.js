@@ -39,12 +39,12 @@ export default (url, outputDirPath = process.cwd()) => {
         .then(() => assets);
     })
     .then((assets) => {
-      const tasks = assets.map(({ pageUrl, name }) => {
+      const tasks = assets.map(({ assetUrl, name }) => {
         const assetPath = path.resolve(dirPath, name);
 
         return {
-          title: `download asset ${pageUrl.toString()}`,
-          task: () => downloadAsset(pageUrl.toString(), assetPath),
+          title: `download asset ${assetUrl.toString()}`,
+          task: () => downloadAsset(assetUrl.toString(), assetPath),
         };
       });
 

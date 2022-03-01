@@ -42,23 +42,23 @@ const extractAssets = (data, url, dirName) => {
         .map((element) => {
           const $element = $(element);
           const src = $element.attr(attribute);
-          const pageUrl = new URL(src, origin);
-          const name = slugifyFileName(pageUrl);
+          const assetUrl = new URL(src, origin);
+          const name = slugifyFileName(assetUrl);
 
           return {
-            $element, pageUrl, attribute, name,
+            $element, assetUrl, attribute, name,
           };
         });
 
       return assetData;
     })
-    .filter(({ pageUrl }) => pageUrl.origin === origin)
+    .filter(({ assetUrl }) => assetUrl.origin === origin)
     .map(({
-      $element, pageUrl, attribute, name,
+      $element, assetUrl, attribute, name,
     }) => {
       $element.attr(attribute, path.join(dirName, name));
 
-      return { pageUrl, name };
+      return { assetUrl, name };
     });
 
   const html = $.root().html();
