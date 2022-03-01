@@ -32,8 +32,8 @@ const slugifyDirName = (url) => {
   return `${slugifiedUrl}_files`;
 };
 
-const extractAssets = (data, url, dirName) => {
-  const { origin } = url;
+const extractAssets = (data, pageUrl, dirName) => {
+  const { origin } = pageUrl;
   const $ = cheerio.load(data);
   const assets = Object.entries(tagsAttributes)
     .flatMap(([tagName, attribute]) => {
